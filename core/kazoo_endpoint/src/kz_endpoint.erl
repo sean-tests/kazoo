@@ -222,6 +222,10 @@ maybe_format_endpoint(Endpoint, Formatters) ->
 merge_attributes(Endpoint, Type) ->
     merge_attributes(Endpoint, Type, attributes_keys()).
 
+account_keys() ->
+    [<<"realm">>
+    ].
+
 attributes_keys() ->
     [<<"call_forward">>
     ,<<"call_recording">>
@@ -269,9 +273,16 @@ merge_attributes(Keys, AccountDoc, EndpointDoc, OwnerDoc) ->
     lists:foldl(fun(Key, EP) ->
                         merge_attribute(Key, AccountDoc, EP, OwnerDoc)
                 end
-               ,EndpointDoc
+               ,merge_account_keys(AccountDoc, EndpointDoc)
                ,Keys
                ).
+
+-spec merge_account_keys(kz_json:object(), kz_json:object()) -> kz_json:object().
+merge_account_keys(AccountDoc, EndpointDoc) ->
+    Fun = fun(K, Acc) ->
+                  kz_json:set_value(K, kz_json:get_value(K, AccountDoc), Acc)
+          end,
+    lists:foldl(Fun, EndpointDoc, account_keys()).
 
 -spec merge_attribute(kz_term:ne_binary(), kz_term:api_object(), kz_term:api_object(), kz_term:api_object()) -> kz_json:object().
 merge_attribute(?ATTR_LOWER_KEY, _Account, Endpoint, Owner) ->
