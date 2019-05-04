@@ -698,6 +698,7 @@ handle_advertise(JObj, Props) ->
 -spec init([]) -> {'ok', nodes_state()}.
 init([]) ->
     lager:debug("starting nodes watcher"),
+    erlang:put('kazoo_bindinds_silent_apply', 'true'),
     kapi_nodes:declare_exchanges(),
     kapi_self:declare_exchanges(),
     Tab = ets:new(?MODULE, ['set'
@@ -811,7 +812,6 @@ handle_info({'heartbeat', Ref}
             _ = ets:insert(Tab, Node),
             AdvertisedPayload = advertise_payload(Node),
             _ = kz_amqp_worker:cast(AdvertisedPayload, fun kapi_nodes:publish_advertise/1),
-            lager:debug("status: ~s", [kz_json:encode(kz_json:from_list(AdvertisedPayload))]),
             {'noreply', State#state{heartbeat_ref=Reference, me=Node}}
     catch
         'exit' : {'timeout' , _} when Me =/= 'undefined' ->
