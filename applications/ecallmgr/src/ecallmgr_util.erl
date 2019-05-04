@@ -10,7 +10,7 @@
 %%%-----------------------------------------------------------------------------
 -module(ecallmgr_util).
 
--export([send_cmd/4, send_cmd/5]).
+-export([send_cmd/4, send_cmd/5, send_cmd/6, send_cmds/4]).
 -export([get_fs_kv/2, get_fs_kv/3, get_fs_key_and_value/3]).
 -export([get_fs_key/1]).
 -export([process_fs_kv/4, format_fs_kv/4]).
@@ -92,78 +92,102 @@
 %% @end
 %%------------------------------------------------------------------------------
 -spec send_cmd(atom(), kz_term:ne_binary(), kz_term:text(), kz_term:text()) -> send_cmd_ret().
-send_cmd(Node, UUID, App, Args) when not is_list(App) ->
-    send_cmd(Node, UUID, kz_term:to_list(App), Args);
-send_cmd(Node, UUID, "xferext", Dialplan) ->
+send_cmd(Node, UUID, App, Args) ->
+    send_cmd(Node, UUID, kz_term:to_binary(App), App, Args).
+
+-spec send_cmd(atom(), kz_term:ne_binary(), kz_term:ne_binary(), kz_term:text(), kz_term:text()) -> send_cmd_ret().
+send_cmd(Node, UUID, App, FSApp, Args) when not is_list(FSApp) ->
+    send_cmd(Node, UUID, App, kz_term:to_list(FSApp), Args);
+send_cmd(Node, UUID, App, "xferext", Dialplan) ->
     XferExt = [begin
                    lager:debug("building xferext on node ~s: ~s", [Node, V]),
-                   {kz_term:to_list(K), kz_term:to_list(V)}
+                   {FSApp, Arg} = case binary:split(kz_term:to_binary(V), <<" ">>) of
+                                      [AppName, AppArgs] -> {AppName, AppArgs};
+                                      [AppName] -> {AppName, <<>>}
+                                  end,
+                   [{<<"call-command">>, <<"execute">>}
+                   ,{<<"execute-app-name">>, kz_term:to_binary(FSApp)}
+                   ,{<<"execute-app-arg">>, kz_term:to_binary(Arg)}
+                   ,{<<"event-uuid-name">>, kz_term:to_binary(App)}
+                   ]
                end
                || {K, V} <- Dialplan,
                   not cmd_is_empty({kz_term:to_list(K), kz_term:to_list(V)})
               ],
-    'ok' = freeswitch:sendmsg(Node, UUID, [{"call-command", "xferext"} | XferExt]);
-send_cmd(Node, UUID, App, Args) when not is_list(Args) ->
-    send_cmd(Node, UUID, App, kz_term:to_list(Args));
-send_cmd(_Node, _UUID, "kz_multiset", "^^") -> 'ok';
-send_cmd(Node, UUID, "playstop", _Args) ->
-    lager:debug("execute on node ~s: uuid_break(~s all)", [Node, UUID]),
-    freeswitch:api(Node, 'uuid_break', kz_term:to_list(<<UUID/binary, " all">>));
-send_cmd(Node, UUID, "unbridge", _) ->
-    lager:debug("execute on node ~s: uuid_park(~s)", [Node, UUID]),
-    freeswitch:api(Node, 'uuid_park', kz_term:to_list(UUID));
-send_cmd(Node, _UUID, "broadcast", Args) ->
-    lager:debug("execute on node ~s: uuid_broadcast(~s)", [Node, Args]),
-    Resp = freeswitch:api(Node, 'uuid_broadcast', kz_term:to_list(iolist_to_binary(Args))),
+    freeswitch:cmds(Node, UUID, XferExt);
+send_cmd(Node, UUID, App, FSApp, Args) when not is_list(Args) ->
+    send_cmd(Node, UUID, App, FSApp, kz_term:to_list(Args));
+send_cmd(_Node, _UUID, _App, "kz_multiset_encoded", "^^") -> 'ok';
+send_cmd(Node, UUID, App, "playstop", _Args) ->
+    lager:debug("execute on node ~s: ~s uuid_break(~s all)", [Node, App, UUID]),
+    freeswitch:api(Node, 'uuid_break', <<UUID/binary, " all">>);
+send_cmd(Node, UUID, App, "unbridge", _) ->
+    lager:debug("execute on node ~s: ~s uuid_park(~s)", [Node, App, UUID]),
+    freeswitch:api(Node, 'uuid_park', UUID);
+send_cmd(Node, _UUID, App, "broadcast", Args) ->
+    lager:debug("execute on node ~s: ~s uuid_broadcast(~s)", [Node, App, Args]),
+    Resp = freeswitch:api(Node, 'uuid_broadcast', iolist_to_binary(Args)),
     lager:debug("broadcast resulted in: ~p", [Resp]),
     Resp;
-send_cmd(Node, UUID, "call_pickup", Target) ->
+send_cmd(Node, UUID, App, "call_pickup", Target) ->
     Args = iolist_to_binary([UUID, " ", Target]),
-    lager:debug("execute on node ~s: uuid_bridge(~s)", [Node, Args]),
-    freeswitch:api(Node, 'uuid_bridge', kz_term:to_list(Args));
-send_cmd(Node, UUID, "hangup", Args) ->
-    lager:debug("terminate call on node ~s", [Node]),
+    lager:debug("execute on node ~s: ~s uuid_bridge(~s)", [Node, App, Args]),
+    freeswitch:api(Node, 'uuid_bridge', Args);
+send_cmd(Node, UUID, App, "hangup", Args) ->
+    lager:debug("terminate call on node ~s ~s", [Node, App]),
     freeswitch:api(Node, 'uuid_kill', iolist_to_binary([UUID, " ", Args]));
-send_cmd(Node, UUID, "break", _) ->
-    lager:debug("break call on node ~s", [Node]),
-    freeswitch:api(Node, 'uuid_break', kz_term:to_list(UUID));
-send_cmd(Node, _UUID, "audio_level", Args) ->
-    lager:debug("execute on node ~s: uuid_audio ~p", [Node, Args]),
-    freeswitch:api(Node, 'uuid_audio', kz_term:to_list(iolist_to_binary(Args)));
-send_cmd(Node, UUID, "conference", Args) ->
-    Args1 = iolist_to_binary([UUID, " conference:", Args, " inline"]),
-    lager:debug("starting conference on ~s: ~s", [Node, Args1]),
-    freeswitch:api(Node, 'uuid_transfer', kz_term:to_list(Args1));
-send_cmd(Node, _UUID, "transfer", Args) ->
-    lager:debug("transferring on ~s: ~s", [Node, Args]),
-    freeswitch:api(Node, 'uuid_transfer', kz_term:to_list(Args));
-send_cmd(Node, _UUID, "uuid_" ++ _ = API, Args) ->
-    lager:debug("using api for ~s command ~s: ~s", [API, Node, Args]),
-    freeswitch:api(Node, kz_term:to_atom(API, 'true'), kz_term:to_list(Args));
-send_cmd(Node, _UUID, "kz_uuid_" ++ _ = API, Args) ->
-    lager:debug("using api for ~s command ~s: ~s", [API, Node, Args]),
-    freeswitch:api(Node, kz_term:to_atom(API, 'true'), kz_term:to_list(Args));
-send_cmd(Node, UUID, App, Args) ->
-    send_cmd(Node, UUID, App, Args, []).
+send_cmd(Node, UUID, App, "break", _) ->
+    lager:debug("break call on node ~s ~s", [Node, App]),
+    freeswitch:api(Node, 'uuid_break', UUID);
+send_cmd(Node, _UUID, App, "audio_level", Args) ->
+    lager:debug("execute on node ~s: ~s uuid_audio ~p", [Node, App, Args]),
+    freeswitch:api(Node, 'uuid_audio', iolist_to_binary(Args));
+send_cmd(Node, _UUID, App, "transfer", Args) ->
+    lager:debug("transferring on ~s: ~s ~s", [Node, App, Args]),
+    freeswitch:api(Node, 'uuid_transfer', iolist_to_binary(Args));
+send_cmd(Node, _UUID, App, "uuid_" ++ _ = API, Args) ->
+    lager:debug("using api for ~s command ~s: ~s ~s", [API, Node, App, Args]),
+    freeswitch:api(Node, kz_term:to_atom(API, 'true'), iolist_to_binary(Args));
+send_cmd(Node, _UUID, App, "kz_uuid_" ++ _ = API, Args) ->
+    lager:debug("using api for ~s command ~s: ~s ~s", [API, Node, App, Args]),
+    freeswitch:api(Node, kz_term:to_atom(API, 'true'), iolist_to_binary(Args));
+send_cmd(Node, UUID, App, FSApp, Args) ->
+    send_cmd(Node, UUID, App, FSApp, Args, []).
 
--spec send_cmd(atom(), kz_term:ne_binary(), kz_term:text(), kz_term:text(), kz_term:proplist()) -> send_cmd_ret().
-send_cmd(Node, UUID, App, Args, ExtraHeaders) ->
-    AppName = dialplan_application(App),
-    case freeswitch:sendmsg(Node, UUID, [{"call-command", "execute"}
-                                        ,{"execute-app-name", AppName}
-                                        ,{"execute-app-arg", kz_term:to_list(Args)}
-                                         | ExtraHeaders
-                                        ])
-    of
-        {'error', 'baduuid'} ->
-            lager:info("uuid ~s on node ~s is bad", [UUID, Node]),
-            throw({'error', 'baduuid'});
-        Result ->
-            lager:debug("execute on node ~s(~s) ~s(~s): ~p"
-                       ,[Node, UUID, AppName, Args, Result]
-                       ),
-            Result
-    end.
+-spec send_cmd(atom(), kz_term:ne_binary(), kz_term:ne_binary(), kz_term:text(), kz_term:text(), kz_term:proplist()) -> send_cmd_ret().
+send_cmd(Node, UUID, App, FSApp, Args, EventArgs) ->
+    AppName = dialplan_application(FSApp),
+    Result = freeswitch:cmd(Node, UUID, [{<<"call-command">>, <<"execute">>}
+                                        ,{<<"execute-app-name">>, kz_term:to_binary(AppName)}
+                                        ,{<<"execute-app-arg">>, kz_term:to_binary(Args)}
+                                        ,{<<"event-uuid-name">>, kz_term:to_binary(App)}
+                                         | EventArgs
+                                        ]),
+    lager:debug("execute result on node ~s(~s)  ~s(~s)  ~s(~s) ~p : ~p"
+               ,[Node, UUID, App, FSApp, AppName, Args, EventArgs, Result]
+               ),
+    Result.
+
+-spec send_cmds(atom(), kz_term:ne_binary(), kz_term:ne_binary(), [{kz_term:text(), kz_term:text()}]) -> send_cmd_ret().
+send_cmds(Node, UUID, App, Cmds) ->
+    Commands = [begin
+                    {FSApp, Args, EventArgs} = case Cmd of
+                                                   {A, B} -> {A, B, []};
+                                                   {_, _, _} = Three -> Three
+                                               end,
+                    AppName = dialplan_application(FSApp),
+                    [{<<"call-command">>, <<"execute">>}
+                    ,{<<"execute-app-name">>, dialplan_application(kz_term:to_binary(AppName))}
+                    ,{<<"execute-app-arg">>, kz_term:to_binary(Args)}
+                    ,{<<"event-uuid-name">>, kz_term:to_binary(App)}
+                     | EventArgs
+                    ]
+                end || Cmd <- Cmds],
+    Result = freeswitch:cmds(Node, UUID, Commands),
+    lager:debug("execute on node ~s(~s) : ~p"
+               ,[Node, UUID, Result]
+               ),
+    Result.
 
 -spec cmd_is_empty({list(), list()}) -> boolean().
 cmd_is_empty({"kz_multiset", "^^"}) -> 'true';
