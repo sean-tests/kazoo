@@ -9,6 +9,8 @@ Triggers when objects (like JSON document objects) of certain types in Kazoo are
 
 ## Modifiers
 
+To restrict the kind of document or the action or both, you can set the custom data to:
+
 * **type:** A list of object types to handle:
     * `account`
     * `call_recording`

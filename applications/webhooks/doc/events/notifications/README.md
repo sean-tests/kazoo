@@ -1,6 +1,8 @@
 # Notification events
 
-Fire a webhook when a notification event is triggered in Kazoo.
+This events will fire when a notification event is triggered in Kazoo. These are the same notifications as those Email notifications you can get from Branding application.
+
+Please note that most of the fields should be present on all payloads, but they could also be missing base on the available information.
 
 ## Info
 
@@ -31,7 +33,7 @@ All notifications might include these common fields:
 
 This event is triggered when an end user requests the home zone of an account is changed.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `zones`
@@ -40,7 +42,7 @@ This event is triggered when an end user requests the home zone of an account is
 
 This event is triggered when an customer want send own notification, as example from callflow.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `call_bridged`
@@ -63,7 +65,7 @@ This event is triggered when an customer want send own notification, as example 
 
 This event is triggered when an end user would like the CNAM for a number changed.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `acquired_for`
@@ -77,7 +79,7 @@ This event is triggered when an end user would like the CNAM for a number change
 
 This event is triggered when the customer update API is used to deliver a message to the account.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `databag`
@@ -89,7 +91,7 @@ This event is triggered when the customer update API is used to deliver a messag
 
 This event is triggered when a call to an number classified as emergency fails.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `call_id`
@@ -102,7 +104,7 @@ This event is triggered when a call to an number classified as emergency fails.
 
 This event is triggered when a device fails to re-register and the contact expires.
 
-##### Fields
+##### Possible fields
 
 * `account_db`
 * `account_id`
@@ -131,7 +133,7 @@ This event is triggered when a device fails to re-register and the contact expir
 
 This event is triggered when an end user registers the first device and/or places the first call on an account.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `occurrence`
@@ -140,7 +142,7 @@ This event is triggered when an end user registers the first device and/or place
 
 This event is triggered when a fax is successfully received.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `call_id`
@@ -163,7 +165,7 @@ This event is triggered when a fax is successfully received.
 
 This event is triggered when receiving a fax fails.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `call_id`
@@ -188,7 +190,7 @@ This event is triggered when receiving a fax fails.
 
 This event is triggered when an account is found with a balance below the notification threshold.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `current_balance`
@@ -197,7 +199,7 @@ This event is triggered when an account is found with a balance below the notifi
 
 This event is triggered when an corresponding missed call action in a callflow is invoked.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `call_bridged`
@@ -217,7 +219,7 @@ This event is triggered when an corresponding missed call action in a callflow i
 
 This event is triggered when an end user creates a new account.
 
-##### Fields
+##### Possible fields
 
 * `account_api_key`
 * `account_db`
@@ -229,7 +231,7 @@ This event is triggered when an end user creates a new account.
 
 This event is triggered when an end user creates a new user.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `password`
@@ -239,7 +241,7 @@ This event is triggered when an end user creates a new user.
 
 This event is triggered when a fax is successfully transmitted.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `call_id`
@@ -259,7 +261,7 @@ This event is triggered when a fax is successfully transmitted.
 
 This event is triggered when transmitting a fax fails.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `call_id`
@@ -280,7 +282,7 @@ This event is triggered when transmitting a fax fails.
 
 This event is triggered when the received email-to-fax email is invalid.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `errors`
@@ -298,7 +300,7 @@ This event is triggered when the received email-to-fax email is invalid.
 
 This event is triggered when an end user requests a password recovery link.
 
-##### Fields
+##### Possible fields
 
 * `account_db`
 * `account_id`
@@ -313,7 +315,7 @@ This event is triggered when an end user requests a password recovery link.
 
 This event is triggered when a port request is canceled.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `authorized_by`
@@ -328,7 +330,7 @@ This event is triggered when a port request is canceled.
 
 This event is triggered when a comment is left on a port request.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `authorized_by`
@@ -343,7 +345,7 @@ This event is triggered when a comment is left on a port request.
 
 This event is triggered when a port request is accepted and submitted to a carrier.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `authorized_by`
@@ -358,7 +360,7 @@ This event is triggered when a port request is accepted and submitted to a carri
 
 This event is triggered when a port request is rejected.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `authorized_by`
@@ -373,7 +375,7 @@ This event is triggered when a port request is rejected.
 
 This event is triggered when a port is submitted for processing.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `authorized_by`
@@ -389,7 +391,7 @@ This event is triggered when a port is submitted for processing.
 
 This event is triggered when a port is accepted by a carrier and scheduled.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `authorized_by`
@@ -404,7 +406,7 @@ This event is triggered when a port is accepted by a carrier and scheduled.
 
 This event is triggered when a port is created, prior to submitting.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `authorized_by`
@@ -419,7 +421,7 @@ This event is triggered when a port is created, prior to submitting.
 
 This event is triggered when a port request for number is completed.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `authorized_by`
@@ -434,7 +436,7 @@ This event is triggered when a port request for number is completed.
 
 This event is triggered when a device registers but is not currently registered.
 
-##### Fields
+##### Possible fields
 
 * `account_db`
 * `account_id`
@@ -460,7 +462,7 @@ This event is triggered when a device registers but is not currently registered.
 
 This event is triggered when an account's billable quantities change.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `audit_log`
@@ -471,7 +473,7 @@ This event is triggered when an account's billable quantities change.
 
 This event is triggered to alert the system administrators.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `details`
@@ -488,7 +490,7 @@ This event is triggered to alert the system administrators.
 
 This event is triggered when an account automatic top-up is attempted.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `add_ons`
@@ -508,7 +510,7 @@ This event is triggered when an account automatic top-up is attempted.
 
 This event is triggered when a transaction is attempted.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `add_ons`
@@ -529,7 +531,7 @@ This event is triggered when a transaction is attempted.
 
 This event is triggered any time an attempt to leave a voicemail message is blocked because the voicemail box is full.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `max_message_count`
@@ -540,7 +542,7 @@ This event is triggered any time an attempt to leave a voicemail message is bloc
 
 This event is triggered any time a voicemail message is left.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `call_id`
@@ -560,7 +562,7 @@ This event is triggered any time a voicemail message is left.
 
 This event is triggered any time a voicemail message is saved in the voicemail box 'new' folder.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `call_id`
@@ -580,7 +582,7 @@ This event is triggered any time a voicemail message is saved in the voicemail b
 
 This event is triggered when a corresponding webhook action in a callflow is reached.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `data`
@@ -591,7 +593,7 @@ This event is triggered when a corresponding webhook action in a callflow is rea
 
 This event is triggered when a webhook is disabled.
 
-##### Fields
+##### Possible fields
 
 * `account_id`
 * `hook_id`

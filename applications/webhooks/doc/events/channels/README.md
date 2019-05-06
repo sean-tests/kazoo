@@ -1,10 +1,17 @@
-# Channel's base payload
+# Channel Events
 
-All `CHANNEL_DESTROY`, `CHANNEL_CREATE`, `CHANNEL_ANSWER`, `CHANNEL_BRIDGE` are share common payload.
+Typically, events would be fired for new calls, when a call is answered, and when a call is finished:
 
-Fields inside this payload, especially `costum_channel_vars` and `custome_application_vars` varies and are depend on calls types and nature. They can also be missing depends on call types.
+* `channel_answer`
+* `channel_bridge`
+* `channel_create`
+* `channel_destroy`
 
-## Sample
+These events are sharing common fields below though their existence and their values, especially `costum_channel_vars` and `custome_application_vars`, varies and are depend on specific call types.
+
+## Base Channel event sample
+
+Here is a sample of what you can expect to receive when a channel event is triggered. As said above the values and existence is varied based on the where from/to call is originate and the type of the call:
 
 ```json
 {
@@ -33,4 +40,99 @@ Fields inside this payload, especially `costum_channel_vars` and `custome_applic
     "timestamp": "63724349409",
     "to": "+15552345678@matrix.test.com"
 }
+```
+
+
+## Channel Answer
+
+This webhook is triggered when a channel establishes two-way audio, such as a voicemail box or the called party answering.
+
+### Info
+
+* **Name:** channel_answer
+* **Friendly name:** Channel Answer
+
+### Modifiers
+
+_None._
+
+### Sample
+
+In addition to [Base Channel Payload](#base-channel-event-sample) this event includes below fields:
+
+```json
+    "hook_event": "channel_answer"
+```
+
+
+## Channel Bridge
+
+This webhook is triggered when two channels are bridged together, such as two users/devices connected together.
+
+### Info
+
+* **Name:** channel_bridge
+* **Friendly name:** Channel Bridge
+
+### Modifiers
+
+_None._
+
+### Sample
+
+In addition to [Base Channel Payload](#base-channel-event-sample) this event includes below fields:
+
+```json
+    "hook_event": "channel_bridge",
+    "original_number": "+15555674567",
+    "other_leg_destination_number": "+1345678349"
+```
+
+
+## Channel Create
+
+This webhook is triggered when a new channel is created.
+
+### Info
+
+* **Name:** channel_create
+* **Friendly name:** Channel Create
+
+### Modifiers
+
+_None._
+
+### Sample
+
+In addition to [Base Channel Payload](#base-channel-event-sample) this event includes below fields:
+
+```json
+    "hook_event": "channel_create"
+```
+
+
+## Channel Destroy
+
+This webhook is triggered when a channel is destroyed, usually as a result of a hangup.
+
+### Info
+
+* **Name:** channel_destroy
+* **Friendly name:** Channel Destroy
+
+### Modifiers
+
+_None._
+
+### Sample
+
+In addition to [Base Channel Payload](#base-channel-event-sample) this event includes below fields:
+
+```json
+    "hook_event": "channel_destroy",
+    "hangup_cause": "NORMAL_CLEARING",
+    "hangup_code": "sip:200",
+    "duration_seconds": 6,
+    "ringing_seconds": 0,
+    "billing_seconds": 6
 ```
