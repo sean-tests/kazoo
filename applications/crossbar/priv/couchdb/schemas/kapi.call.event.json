@@ -18,6 +18,12 @@
         "Billing-Seconds": {
             "type": "string"
         },
+        "Bridge-Hangup-Cause": {
+            "type": "string"
+        },
+        "Call-Debug": {
+            "type": "string"
+        },
         "Call-Direction": {
             "type": "string"
         },
@@ -73,6 +79,12 @@
             "type": "string"
         },
         "Conference-Name": {
+            "type": "string"
+        },
+        "Connecting-Leg-A-UUID": {
+            "type": "string"
+        },
+        "Connecting-Leg-B-UUID": {
             "type": "string"
         },
         "Control-Queue": {
@@ -141,6 +153,9 @@
         "Local-SDP": {
             "type": "string"
         },
+        "Media-Recordings": {
+            "type": "string"
+        },
         "Media-Server": {
             "type": "string"
         },
@@ -174,6 +189,9 @@
         "Raw-Application-Name": {
             "type": "string"
         },
+        "Recording": {
+            "type": "string"
+        },
         "Remote-SDP": {
             "type": "string"
         },
@@ -183,7 +201,16 @@
         "Request": {
             "type": "string"
         },
+        "Resigning-Peer-UUID": {
+            "type": "string"
+        },
+        "Resigning-UUID": {
+            "type": "string"
+        },
         "Ringing-Seconds": {
+            "type": "string"
+        },
+        "Root-Call-Interaction-ID": {
             "type": "string"
         },
         "Silence-Terminated": {
@@ -220,6 +247,9 @@
             "type": "string"
         },
         "Transfer-History": {
+            "type": "string"
+        },
+        "Transfer-Source": {
             "type": "string"
         },
         "Transfer-To": {
