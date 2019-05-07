@@ -18,7 +18,7 @@
 
 -define(SERVER, ?MODULE).
 
--define(CHILDREN, [?WORKER_TYPE('ecallmgr_call_control', 'transient')]).
+-define(CHILDREN, [?WORKER_TYPE('ecallmgr_call_control', 'temporary')]).
 
 %%%=============================================================================
 %%% API functions
@@ -32,10 +32,15 @@
 start_link() ->
     supervisor:start_link({'local', ?SERVER}, ?MODULE, []).
 
--type start_args() :: [atom() | kz_term:api_ne_binary() | kz_json:object()].
--spec start_proc(start_args()) -> kz_types:sup_startchild_ret().
-start_proc(Args) ->
-    supervisor:start_child(?SERVER, Args).
+-spec start_proc(map()) -> kz_types:sup_startchild_ret().
+start_proc(Map) ->
+    supervisor:start_child(?SERVER, [control_q(Map)]).
+
+control_q(#{control_q := _Queue}= Map) -> Map;
+control_q(#{control_q_callback := Fun}= Map) ->
+    Fun(Map);
+control_q(Map) ->
+    ecallmgr_call_control_listener_sup:control_q(Map).
 
 %%%=============================================================================
 %%% Supervisor callbacks
