@@ -207,14 +207,9 @@ json_api(Node, UUID, Cmd, Args, Timeout) when is_atom(Node) ->
     JObj = kz_json:from_list(Params),
     try gen_server:call({'mod_kazoo', Node}, {'json_api', kz_json:encode(JObj)}, Timeout) of
         'timeout' -> {'error', 'timeout'};
-%%         {'ok', <<"-ERR", Reason/binary>>} -> json_api_result('error', Reason);
-%%         {'ok', <<"+OK", Result/binary>>} -> json_api_result('ok', Result);
         {'error', {'parse_error', _Where}} = Err -> Err;
         {'ok', Result} -> json_api_result('ok', Result);
         {'error', Result} -> json_api_result('error', Result)
-%%         'error' -> {'error', 'failed'};
-%%         {'error', _} = Err -> Err;
-%%         Result -> json_api_result('ok', Result)
     catch
         _E:_R ->
             lager:info("failed to execute api command ~s on ~s: ~p ~p", [Cmd, Node, _E, _R]),

@@ -166,15 +166,6 @@ get_codecs(JObj) ->
         Codecs -> Codecs
     end.
 
-%% -spec add_codecs(kz_json:object(), kz_json:object()) -> kz_json:object().
-%% add_codecs(Endpoint, CCVs) ->
-%%     case kz_json:get_value([<<"media">>, <<"audio">>, <<"codecs">>], Endpoint, [])
-%%         ++ kz_json:get_value([<<"media">>, <<"video">>, <<"codecs">>], Endpoint, [])
-%%     of
-%%         [] -> CCVs;
-%%         Codecs -> kz_json:set_value(<<"Codecs">>, Codecs, CCVs)
-%%     end.
-
 -spec profile(kz_term:ne_binary(), kz_term:ne_binary()) -> {'ok', kz_json:object()} | {'error', any()}.
 profile(EndpointId, AccountId) ->
     profile(EndpointId, AccountId, []).
@@ -262,10 +253,6 @@ generate_profile(EndpointId, AccountId, Endpoint, Options) ->
     CPVs = [
             {<<CIDType/binary,"-ID-Number">>, Number}
            ,{<<CIDType/binary,"-ID-Name">>, Name}
-            %%            ,{<<"Callee-ID-Number">>, CIDNumber}
-            %%            ,{<<"Callee-ID-Name">>, CIDName}
-            %%            ,{<<"Outbound-Callee-ID-Number">>, CIDNumber}
-            %%            ,{<<"Outbound-Callee-ID-Name">>, CIDName}
            ,{<<"Internal-Caller-ID-Number">>, CIDNumber}
            ,{<<"Internal-Caller-ID-Name">>, CIDName}
            ,{<<"External-Caller-ID-Number">>, CEDNumber}
@@ -274,8 +261,6 @@ generate_profile(EndpointId, AccountId, Endpoint, Options) ->
            ,{<<"Endpoint-ID">>, EndpointId}
            ,{<<"Endpoint-Caller-ID-Number">>, CIDNumber}
            ,{<<"Endpoint-Caller-ID-Name">>, CIDName}
-
-            %%           ,{<<"Codecs">>, get_codecs(Endpoint)}
            ],
     Profile = [{<<"Domain-Name">>, AccountId}
               ,{<<"User-ID">>, EndpointId}

@@ -30849,6 +30849,11 @@
                             "default": 5,
                             "description": "ecallmgr call_control pool_threshold",
                             "type": "integer"
+                        },
+                        "use_pool": {
+                            "default": false,
+                            "description": "ecallmgr call_control use_pool",
+                            "type": "boolean"
                         }
                     }
                 },

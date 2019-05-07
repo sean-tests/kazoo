@@ -98,9 +98,9 @@
                               ]).
 
 -record(state, {node               :: atom()
-%               ,instance_uuid      :: kz_term:api_ne_binary()
+                                                %               ,instance_uuid      :: kz_term:api_ne_binary()
                ,options = []       :: kz_term:proplist()
-%               ,interfaces = []    :: interfaces()
+                                                %               ,interfaces = []    :: interfaces()
                ,info          :: kz_term:api_object()
                ,start_cmds_pid_ref :: kz_term:api_pid_ref()
                }).
@@ -148,20 +148,20 @@ start_link(Node) -> start_link(Node, []).
 -spec start_link(atom(), kz_term:proplist()) -> kz_types:startlink_ret().
 start_link(Node, Options) when is_atom(Node) ->
     QueueName = list_to_binary([kz_term:to_binary(Node)
-                                ,"-"
-                                ,kz_term:to_binary(?MODULE)
+                               ,"-"
+                               ,kz_term:to_binary(?MODULE)
                                ]),
-    
+
     case freeswitch:json_api(Node, <<"node.info">>) of
         {'ok', Info} ->
             gen_listener:start_link(?SERVER
-                                    ,[{'responders', ?RESPONDERS}
-                                      ,{'bindings', ?BINDINGS(Node)}
-                                      ,{'queue_name', QueueName}
-                                      ,{'queue_options', ?QUEUE_OPTIONS}
-                                      ,{'consume_options', ?CONSUME_OPTIONS}
-                                     ]
-                                    ,[Node, Info, Options]
+                                   ,[{'responders', ?RESPONDERS}
+                                    ,{'bindings', ?BINDINGS(Node)}
+                                    ,{'queue_name', QueueName}
+                                    ,{'queue_options', ?QUEUE_OPTIONS}
+                                    ,{'consume_options', ?CONSUME_OPTIONS}
+                                    ]
+                                   ,[Node, Info, Options]
                                    );
         _Err -> _Err
     end.
@@ -341,7 +341,7 @@ handle_info({'bgerror', _Job, _Result}, State) ->
     lager:debug("job ~s finished with an error: ~p", [_Job, _Result]),
     {'noreply', State};
 handle_info({'DOWN', Ref, 'process', Pid, _Reason}, #state{node=_Node, start_cmds_pid_ref={Pid, Ref}}=State) ->
-%    freeswitch:event(Node, ['CHANNEL_SYNC']),
+                                                %    freeswitch:event(Node, ['CHANNEL_SYNC']),
     {'noreply', State#state{start_cmds_pid_ref='undefined'}};
 handle_info({'EXIT', _, 'noconnection'}, State) ->
     {stop, {'shutdown', 'noconnection'}, State};
@@ -406,13 +406,13 @@ run_start_cmds(Node, Info, Options, Parent) when is_atom(Node) ->
 
 -spec is_restarting(kz_json:object()) -> boolean().
 is_restarting(Info) ->
-            Uptime = (kz_json:get_integer_value([<<"Runtime-Info">>, <<"uptime">>, <<"years">>], Info, 0) * ?SECONDS_IN_YEAR)
-                + (kz_json:get_integer_value([<<"Runtime-Info">>, <<"uptime">>, <<"days">>], Info, 0) * ?SECONDS_IN_DAY)
-                + (kz_json:get_integer_value([<<"Runtime-Info">>, <<"uptime">>, <<"hours">>], Info, 0) * ?SECONDS_IN_HOUR)
-                + (kz_json:get_integer_value([<<"Runtime-Info">>, <<"uptime">>, <<"minutes">>], Info, 0) * ?SECONDS_IN_MINUTE)
-                + kz_json:get_integer_value([<<"Runtime-Info">>, <<"uptime">>, <<"seconds">>], Info, 0),
-            lager:debug("node has been up for ~b s (considered restarting: ~s)", [Uptime, Uptime < ?UPTIME_S]),
-            Uptime < ?UPTIME_S.
+    Uptime = (kz_json:get_integer_value([<<"Runtime-Info">>, <<"uptime">>, <<"years">>], Info, 0) * ?SECONDS_IN_YEAR)
+        + (kz_json:get_integer_value([<<"Runtime-Info">>, <<"uptime">>, <<"days">>], Info, 0) * ?SECONDS_IN_DAY)
+        + (kz_json:get_integer_value([<<"Runtime-Info">>, <<"uptime">>, <<"hours">>], Info, 0) * ?SECONDS_IN_HOUR)
+        + (kz_json:get_integer_value([<<"Runtime-Info">>, <<"uptime">>, <<"minutes">>], Info, 0) * ?SECONDS_IN_MINUTE)
+        + kz_json:get_integer_value([<<"Runtime-Info">>, <<"uptime">>, <<"seconds">>], Info, 0),
+    lager:debug("node has been up for ~b s (considered restarting: ~s)", [Uptime, Uptime < ?UPTIME_S]),
+    Uptime < ?UPTIME_S.
 
 -spec run_start_cmds(atom(), kz_json:object(), kz_term:proplist(), pid(), boolean() | kz_json:objects()) -> 'ok'.
 run_start_cmds(Node, Info, Options, Parent, 'true') when is_atom(Node) ->

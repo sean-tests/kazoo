@@ -183,8 +183,8 @@ handle_fs_reg(Node, Props) ->
     kz_amqp_worker:cast(Req, fun kapi_registration:publish_success/1).
 
 -spec lookup_proxy_path(kz_term:ne_binary(), kz_term:ne_binary()) ->
-                            {'ok', kz_term:api_ne_binary(), kz_term:proplist()} |
-                            {'error', 'not_found'}.
+                               {'ok', kz_term:api_ne_binary(), kz_term:proplist()} |
+                               {'error', 'not_found'}.
 lookup_proxy_path(<<>>, _Username) -> {'error', 'not_found'};
 lookup_proxy_path(_Realm, <<>>) -> {'error', 'not_found'};
 lookup_proxy_path(<<_/binary>> = Realm, <<_/binary>> = Username) ->
@@ -192,7 +192,7 @@ lookup_proxy_path(<<_/binary>> = Realm, <<_/binary>> = Username) ->
                              ,authorizing_id = Username
                              ,_ = '_'
                              },
-    
+
     case ets:match_object(?MODULE, MatchSpec) of
         [] ->
             {'ok', undefined, []};

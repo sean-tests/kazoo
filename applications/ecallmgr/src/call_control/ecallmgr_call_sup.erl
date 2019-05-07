@@ -22,8 +22,7 @@
 -define(SERVER, ?MODULE).
 
 -define(USE_POOL_KEY,[<<"call_control">>, <<"use_pool">>]).
-%-define(USE_POOL, kapps_config:get_boolean(?APP_NAME, ?USE_POOL_KEY, 'false')).
--define(USE_POOL, 'false').
+-define(USE_POOL, kapps_config:get_boolean(?APP_NAME, ?USE_POOL_KEY, 'false')).
 
 -define(POOL_NAME, 'ectl_amqp_pool').
 

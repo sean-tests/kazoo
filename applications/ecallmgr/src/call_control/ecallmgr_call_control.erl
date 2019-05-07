@@ -95,7 +95,7 @@
                ,initial_ccvs :: kz_json:object()
                ,node_down_tref :: kz_term:api_reference()
                ,current_cmd_uuid :: kz_term:api_binary()
-%               ,channel :: kz_term:api_pid()
+                                                %               ,channel :: kz_term:api_pid()
                ,options :: kz_term:proplist()
                ,event_uuids = [] :: kz_term:ne_binaries()
                ,control_ctx = #{} :: map()
@@ -186,11 +186,11 @@ init_control(Pid, #{node := Node
                    ,control_q := ControlQ
                    ,init_fun := InitFun
                    ,exit_fun := ExitFun
-%                   ,channel := Channel
+                                                %                   ,channel := Channel
                    }=Payload) ->
     proc_lib:init_ack(Pid, {'ok', self()}),
     InitFun(Payload),
-%    kz_amqp_channel:consumer_channel(Channel),
+                                                %    kz_amqp_channel:consumer_channel(Channel),
     try Fun(Payload) of
         {'ok', #{controller_q := ControllerQ
                 ,initial_ccvs := CCVs
@@ -213,7 +213,7 @@ init_control(Pid, #{node := Node
             call_control_ready(State),
             gen_server:enter_loop(?MODULE, [], State);
         _Other ->
-            catch(ExitFun(Payload)),
+    catch(ExitFun(Payload)),
             lager:debug("callback doesn't want to proceed")
     catch
         _Ex:_Err ->
@@ -601,7 +601,7 @@ handle_execute_complete(AppName, EventUUID, JObj, #state{current_app=CurrApp
 handle_execute_complete(_AppName, _EventUUID, _JObj, #state{current_app=_CurrApp
                                                            ,current_cmd_uuid=__EventUUID
                                                            }=State) ->
-%    lager:debug_unsafe("call control unhandled exec complete : ~s , ~s => ~s", [_AppName, _EventUUID, kz_json:encode(_JObj, ['pretty'])]),
+                                                %    lager:debug_unsafe("call control unhandled exec complete : ~s , ~s => ~s", [_AppName, _EventUUID, kz_json:encode(_JObj, ['pretty'])]),
     State.
 
 -spec forward_queue(state()) -> state().
@@ -1136,11 +1136,11 @@ handle_replaced(JObj, #state{fetch_id=FetchId
     end.
 
 -spec handle_direct(kz_json:object(), state()) ->
-                             {'noreply', state()}.
+                           {'noreply', state()}.
 handle_direct(JObj, #state{fetch_id=FetchId
-                            ,node=_Node
-                            ,call_id=_CallId
-                            }=State) ->
+                          ,node=_Node
+                          ,call_id=_CallId
+                          }=State) ->
     case kz_call_event:custom_channel_var(JObj, <<"Fetch-ID">>) of
         FetchId ->
             ReplacedBy = kz_json:get_ne_binary_value(<<"Connecting-Leg-A-UUID">>, JObj),            

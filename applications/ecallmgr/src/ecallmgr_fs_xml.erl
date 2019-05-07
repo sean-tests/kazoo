@@ -1466,7 +1466,7 @@ directory_resp_endpoint_xml(Endpoint) ->
 
 dial_string(UserId, Domain, 'undefined', ChannelParams) ->
     list_to_binary(["{"
-                    ,kz_binary:join([<<K/binary, "='", V/binary, "'">> || {K,V} <- ChannelParams], <<",">>)
+                   ,kz_binary:join([<<K/binary, "='", V/binary, "'">> || {K,V} <- ChannelParams], <<",">>)
                    ,"}"
                    ,"sofia/sipinterface_1/"
                    ,UserId
@@ -1475,7 +1475,7 @@ dial_string(UserId, Domain, 'undefined', ChannelParams) ->
                    ]);
 dial_string(UserId, Domain, Proxy, ChannelParams) ->
     list_to_binary(["{"
-                    ,kz_binary:join([<<K/binary, "='", V/binary, "'">> || {K,V} <- ChannelParams], <<",">>)
+                   ,kz_binary:join([<<K/binary, "='", V/binary, "'">> || {K,V} <- ChannelParams], <<",">>)
                    ,"}"
                    ,"sofia/sipinterface_1/"
                    ,UserId

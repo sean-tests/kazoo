@@ -124,7 +124,7 @@ handle_originate_execute(JObj, Props) ->
 %% @end
 %%------------------------------------------------------------------------------
 -spec init([node() | kz_json:object() | map()]) -> {'stop', 'normal'} |
-                                                               {'ok', state()}.
+                                                   {'ok', state()}.
 init([Node, JObj, Context]) ->
     _ = kz_util:put_callid(JObj),
     ServerId = kz_api:server_id(JObj),

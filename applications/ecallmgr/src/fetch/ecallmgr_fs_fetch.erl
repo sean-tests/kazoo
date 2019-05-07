@@ -140,7 +140,6 @@ code_change(_OldVsn, State, _Extra) ->
 %%------------------------------------------------------------------------------
 -spec handle_fetch_req(atom(), kz_json:object()) -> fs_sendmsg_ret().
 handle_fetch_req(Node, JObj) ->
-%    lager:debug_unsafe("FETCH => ~s", [kz_json:encode(JObj, [pretty])]),
     kz_util:put_callid(JObj),
     FetchId = kzd_fetch:fetch_uuid(JObj),
     CoreUUID = kzd_fetch:core_uuid(JObj),

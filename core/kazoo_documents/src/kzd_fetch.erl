@@ -115,7 +115,6 @@ fetch_winning_pid(JObj) ->
 
 -spec fetch_version(data()) -> kz_term:api_ne_binary().
 fetch_version(JObj) ->
-%%    kz_json:get_ne_binary_value(<<"Kazoo-Bundle">>, JObj, <<"community">>).
     kz_json:get_ne_binary_value(<<"Fetch-Version">>, JObj, <<"community">>).
 
 -spec controller_queue(data()) -> kz_term:api_binary().

@@ -127,7 +127,7 @@ handle_info({'tcp', Socket, Data}, #state{socket=Socket
             {'stop', 'decode_error', State};
         {'error', _Error} ->
             lager:error("failed to decode packet from ~s (~p b) for ~p: ~p => ~p"
-                         ,[Node, byte_size(Data), get_event_bindings(State), _Error, Data]),
+                       ,[Node, byte_size(Data), get_event_bindings(State), _Error, Data]),
             {'stop', 'decode_error', State};
         _Pid when is_pid(_Pid) ->
             {'noreply', State, Timeout}
