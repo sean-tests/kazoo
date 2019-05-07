@@ -17,8 +17,8 @@
 -export([all_nodes_connected/0]).
 -export([add/1, add/2, add/3]).
 -export([remove/1]).
--export([nodeup/1]).
--export([is_node_up/1]).
+-export([nodeup/1, nodeup/2, nodedown/1]).
+-export([is_node/1, is_node_up/1, is_node_down/1]).
 -export([sip_url/1]).
 -export([sip_external_ip/1]).
 -export([summary/0]).
@@ -63,12 +63,15 @@
 
 -define(EXPIRE_CHECK, 60 * ?MILLISECONDS_IN_SECOND).
 
+-type connect_strategy() :: 'ping' | 'heartbeat'.
+
 -record(node, {node :: atom()
               ,cookie :: atom()
               ,connected = 'false' :: boolean()
               ,started = kz_time:now_s() :: kz_time:gregorian_seconds()
               ,client_version :: kz_term:api_binary()
               ,options = [] :: kz_term:proplist()
+              ,connect_strategy = 'ping' :: connect_strategy()
               }).
 -type fs_node() :: #node{}.
 
@@ -119,25 +122,29 @@ add(Node, Cookie) when is_atom(Cookie) ->
 
 -spec add(atom(), atom(), kz_term:proplist() | atom()) -> 'ok' | {'error', 'no_connection'}.
 add(Node, Cookie, Opts) when is_atom(Node) ->
-    gen_listener:call(?SERVER
-                     ,{'add_fs_node'
-                      ,Node
-                      ,Cookie
-                      ,[{'cookie', Cookie}
-                        | props:delete('cookie', Opts)
-                       ]
-                      }
-                     ,60 * ?MILLISECONDS_IN_SECOND
-                     ).
+    gen_server:call(?SERVER
+                   ,{'add_fs_node'
+                    ,Node
+                    ,Cookie
+                    ,[{'cookie', Cookie}
+                      | props:delete('cookie', Opts)
+                     ]
+                    }
+                   ,60 * ?MILLISECONDS_IN_SECOND
+                   ).
 
 -spec nodeup(atom()) -> 'ok'.
-nodeup(Node) when is_atom(Node) ->
-    gen_listener:cast(?SERVER, {'fs_nodeup', Node}).
+nodeup(Node) ->
+    nodeup(Node, 'ping').
+
+-spec nodeup(atom(), atom()) -> 'ok'.
+nodeup(Node, Strategy) when is_atom(Node) ->
+    gen_server:cast(?SERVER, {'fs_nodeup', Node, Strategy}).
 
 %% returns 'ok' or {'error', some_error_atom_explaining_more}
 -spec remove(atom()) -> 'ok'.
 remove(Node) when is_atom(Node) ->
-    gen_listener:cast(?SERVER, {'rm_fs_node', Node}).
+    gen_server:cast(?SERVER, {'rm_fs_node', Node}).
 
 -spec connected() -> kz_term:atoms() | kz_term:proplist_kv(atom(), kz_time:gregorian_seconds()).
 connected() ->
@@ -146,7 +153,7 @@ connected() ->
 -spec connected('false') -> [atom()];
                ('true') -> [{atom(), kz_time:gregorian_seconds()}].
 connected(Verbose) ->
-    gen_listener:call(?SERVER, {'connected_nodes', Verbose}).
+    gen_server:call(?SERVER, {'connected_nodes', Verbose}).
 
 -spec flush() -> 'ok'.
 flush() -> do_flush(<<>>).
@@ -166,7 +173,15 @@ do_flush(Args) ->
 
 -spec is_node_up(atom()) -> boolean().
 is_node_up(Node) when is_atom(Node) ->
-    gen_listener:call(?SERVER, {'is_node_up', Node}).
+    gen_server:call(?SERVER, {'is_node_up', Node}).
+
+-spec is_node_down(atom()) -> boolean().
+is_node_down(Node) when is_atom(Node) ->
+    not gen_server:call(?SERVER, {'is_node_up', Node}).
+
+-spec is_node(atom()) -> boolean().
+is_node(Node) when is_atom(Node) ->
+    gen_server:call(?SERVER, {'is_node', Node}).
 
 -spec sip_url(atom() | kz_term:text()) -> kz_term:api_binary().
 sip_url(Node) when not is_atom(Node) ->
@@ -200,18 +215,18 @@ all_nodes_connected() ->
 
 -spec summary() -> 'ok'.
 summary() ->
-    print_summary(gen_listener:call(?SERVER, 'nodes')).
+    print_summary(gen_server:call(?SERVER, 'nodes')).
 
 
 -spec details() -> 'ok'.
 details() ->
-    print_details(gen_listener:call(?SERVER, 'nodes')).
+    print_details(gen_server:call(?SERVER, 'nodes')).
 
 -spec details(kz_term:text() | atom()) -> 'ok'.
 details(NodeName) when not is_atom(NodeName) ->
     details(kz_term:to_atom(NodeName, 'true'));
 details(NodeName) when is_atom(NodeName) ->
-    case gen_listener:call(?SERVER, {'node', NodeName}) of
+    case gen_server:call(?SERVER, {'node', NodeName}) of
         {'error', 'not_found'} ->
             io:format("Node ~s not found!~n", [NodeName]);
         {'ok', Node} ->
@@ -307,13 +322,13 @@ format_capability(_, []) -> 'undefined'.
 
 -spec set_capability(atom(), kz_term:ne_binary(), boolean()) -> 'ok'.
 set_capability(Node, Capability, Toggle) when is_boolean(Toggle) ->
-    gen_listener:call(?SERVER, {'set_capability', Node, Capability, Toggle}).
+    gen_server:call(?SERVER, {'set_capability', Node, Capability, Toggle}).
 
 -spec add_capability(atom(), kz_json:object()) -> 'ok'.
 add_capability(Node, Capability) ->
     case has_capability(Node, Capability) of
         'true' -> 'ok';
-        'false' -> gen_listener:call(?SERVER, {'add_capability', Node, Capability})
+        'false' -> gen_server:call(?SERVER, {'add_capability', Node, Capability})
     end.
 
 capability_to_json(#capability{node=Node
@@ -335,7 +350,7 @@ handle_fs_xml_flush(JObj, _Props) ->
     flush(Username, Realm).
 
 %%%=============================================================================
-%%% gen_listener callbacks
+%%% gen_server callbacks
 %%%=============================================================================
 
 %%------------------------------------------------------------------------------
@@ -347,9 +362,7 @@ init([]) ->
     kz_util:put_callid(?DEFAULT_LOG_SYSTEM_ID),
     process_flag('trap_exit', 'true'),
     lager:debug("starting new fs handler"),
-    _ = ets:new('sip_subscriptions', ['set', 'public', 'named_table', {'keypos', #sip_subscription.key}]),
     _ = ets:new(?CAPABILITY_TBL, ['bag', 'protected', 'named_table', {'keypos', #capability.node}]),
-    _ = erlang:send_after(?EXPIRE_CHECK, self(), 'expire_sip_subscriptions'),
     InitPidRef = kz_util:spawn_monitor(fun start_preconfigured_servers/0, []),
     {'ok', #state{init_pidref=InitPidRef}}.
 
@@ -365,6 +378,8 @@ handle_call({'is_node_up', Node}, _From, #state{nodes=Nodes}=State) ->
                {'ok', #node{connected=Connected}} -> Connected
            end,
     {'reply', Resp, State};
+handle_call({'is_node', Node}, _From, #state{nodes=Nodes}=State) ->
+    {'reply', dict:find(Node, Nodes) =/= 'error', State};
 handle_call({'connected_nodes', 'false'}, _From, #state{nodes=Nodes}=State) ->
     Resp = [Node
             || {_, #node{node=Node
@@ -389,11 +404,11 @@ handle_call({'add_fs_node', NodeName, Cookie, Options}, From, State) ->
           fun() ->
                   try maybe_add_node(NodeName, Cookie, Options, State) of
                       Reply ->
-                          gen_listener:reply(From, Reply)
+                          gen_server:reply(From, Reply)
                   catch
                       _E:R ->
                           lager:debug("failed to add fs node ~s(~s): ~s: ~p", [NodeName, Cookie, _E, R]),
-                          gen_listener:reply(From, R)
+                          gen_server:reply(From, R)
                   end
           end),
     {'noreply', State};
@@ -428,15 +443,13 @@ handle_call(_Request, _From, State) ->
 %% @end
 %%------------------------------------------------------------------------------
 -spec handle_cast(any(), state()) -> kz_types:handle_cast_ret_state(state()).
-handle_cast({'fs_nodeup', NodeName}, State) ->
-    _ = kz_util:spawn(fun maybe_handle_nodeup/2, [NodeName, State]),
+handle_cast({'fs_nodeup', NodeName, Strategy}, State) ->
+    _ = kz_util:spawn(fun maybe_handle_nodeup/3, [NodeName, Strategy, State]),
     {'noreply', State};
-handle_cast({'update_node', #node{node=NodeName, connected=Connected}=Node}
+handle_cast({'update_node', #node{node=NodeName}=Node}
            ,#state{nodes=Nodes}=State) ->
-    erlang:monitor_node(NodeName, Connected),
     {'noreply', State#state{nodes=dict:store(NodeName, Node, Nodes)}};
 handle_cast({'remove_node', #node{node=NodeName}}, #state{nodes=Nodes}=State) ->
-    erlang:monitor_node(NodeName, 'false'),
     remove_capabilities(NodeName),
     {'noreply', State#state{nodes=dict:erase(NodeName, Nodes)}};
 handle_cast({'remove_capabilities', NodeName}, State) ->
@@ -446,13 +459,6 @@ handle_cast({'remove_capabilities', NodeName}, State) ->
 handle_cast({'rm_fs_node', NodeName}, State) ->
     _ = kz_util:spawn(fun maybe_rm_fs_node/2, [NodeName, State]),
     {'noreply', State};
-
-handle_cast({'gen_listener', {'created_queue', _QueueName}}, State) ->
-    {'noreply', State};
-handle_cast({'gen_listener', {'is_consuming', _IsConsuming}}, State) ->
-    lager:debug("consuming from queue: ~s", [_IsConsuming]),
-    {'noreply', State};
-
 handle_cast(_Cast, State) ->
     lager:debug("unhandled cast: ~p", [_Cast]),
     {'noreply', State, 'hibernate'}.
@@ -462,15 +468,6 @@ handle_cast(_Cast, State) ->
 %% @end
 %%------------------------------------------------------------------------------
 -spec handle_info(any(), state()) -> kz_types:handle_info_ret_state(state()).
-handle_info('expire_sip_subscriptions', Cache) ->
-    Now = kz_time:now_s(),
-    DeleteSpec = [{#sip_subscription{expires = '$1', timestamp = '$2', _ = '_'},
-                   [{'>', {'const', Now}, {'+', '$2', '$1'}}],
-                   ['true']}
-                 ],
-    ets:select_delete('sip_subscriptions', DeleteSpec),
-    _ = erlang:send_after(?EXPIRE_CHECK, self(), 'expire_sip_subscriptions'),
-    {'noreply', Cache};
 handle_info({'nodedown', NodeName}, State) ->
     _ = kz_util:spawn(fun maybe_handle_nodedown/2, [NodeName, State]),
     call_control_fs_nodedown(NodeName),
@@ -491,9 +488,9 @@ handle_event(_JObj, _State) ->
     {'reply', []}.
 
 %%------------------------------------------------------------------------------
-%% @doc This function is called by a `gen_listener' when it is about to
+%% @doc This function is called by a `gen_server' when it is about to
 %% terminate. It should be the opposite of `Module:init/1' and do any
-%% necessary cleaning up. When it returns, the `gen_listener' terminates
+%% necessary cleaning up. When it returns, the `gen_server' terminates
 %% with Reason. The return value is ignored.
 %%
 %% @end
@@ -541,11 +538,11 @@ call_control_fs_nodedown([Pid|Pids], NodeName) ->
     _ = ecallmgr_call_control:fs_nodedown(Pid, NodeName),
     call_control_fs_nodedown(Pids, NodeName).
 
--spec maybe_handle_nodeup(fs_node(), state()) -> 'ok'.
-maybe_handle_nodeup(NodeName, #state{nodes=Nodes}=State) ->
+-spec maybe_handle_nodeup(fs_node(), atom(), state()) -> 'ok'.
+maybe_handle_nodeup(NodeName, Strategy, #state{nodes=Nodes}=State) ->
     case dict:find(NodeName, Nodes) of
         {'ok', #node{connected='false'}=Node} ->
-            handle_nodeup(Node, State);
+            handle_nodeup(Node#node{connect_strategy=Strategy}, State);
         _Else -> 'ok'
     end.
 
@@ -566,13 +563,13 @@ maybe_add_node(NodeName, Cookie, Options, #state{self=Srv, nodes=Nodes}) ->
             Node = create_node(NodeName, Cookie, Options),
             case maybe_connect_to_node(Node) of
                 {'error', _}=E ->
-                    _ = gen_listener:cast(Srv, {'update_node', Node#node{connected='false'}}),
+                    _ = gen_server:cast(Srv, {'update_node', Node#node{connected='false'}}),
                     _ = maybe_start_node_pinger(Node),
                     E;
                 'ok' ->
-                    gen_listener:cast(Srv, {'update_node', Node#node{started=kz_time:now_s()
-                                                                    ,connected='true'
-                                                                    }})
+                    gen_server:cast(Srv, {'update_node', Node#node{started=kz_time:now_s()
+                                                                  ,connected='true'
+                                                                  }})
             end
     end.
 
@@ -588,36 +585,43 @@ maybe_rm_fs_node(NodeName, #state{nodes=Nodes}=State) ->
 rm_fs_node(#node{node=NodeName}=Node, #state{self=Srv}) ->
     _ = maybe_disconnect_from_node(Node),
     _ = ecallmgr_fs_pinger_sup:remove_node(NodeName),
-    gen_listener:cast(Srv, {'remove_node', Node}).
+    gen_server:cast(Srv, {'remove_node', Node}).
 
 -spec handle_nodeup(fs_node(), state()) -> 'ok'.
 handle_nodeup(#node{}=Node, #state{self=Srv}) ->
     NewNode = get_fs_client_version(Node),
     case maybe_connect_to_node(NewNode) of
         {'error', _} ->
-            _ = gen_listener:cast(Srv, {'update_node', Node#node{connected='false'}}),
+            _ = gen_server:cast(Srv, {'update_node', Node#node{connected='false'}}),
             _ = maybe_start_node_pinger(Node),
             'ok';
         'ok' ->
-            gen_listener:cast(Srv, {'update_node', NewNode#node{started=kz_time:now_s()
-                                                               ,connected='true'
-                                                               }})
+            gen_server:cast(Srv, {'update_node', NewNode#node{started=kz_time:now_s()
+                                                             ,connected='true'
+                                                             }})
     end.
 
 -spec handle_nodedown(fs_node(), state()) -> 'ok'.
+handle_nodedown(#node{connect_strategy='heartbeat', node=NodeName}=Node, #state{self=Srv}) ->
+    lager:critical("received node down notice for ~s", [NodeName]),
+    _ = maybe_disconnect_from_node(Node),
+    gen_server:cast(Srv, {'remove_capabilities', NodeName}),
+    gen_server:cast(Srv, {'update_node', Node#node{connected='false'}}),
+    _ = maybe_start_node_pinger(Node),
+    'ok';
 handle_nodedown(#node{node=NodeName}=Node, #state{self=Srv}) ->
     lager:critical("received node down notice for ~s", [NodeName]),
     _ = maybe_disconnect_from_node(Node),
-    gen_listener:cast(Srv, {'remove_capabilities', NodeName}),
+    gen_server:cast(Srv, {'remove_capabilities', NodeName}),
     case maybe_connect_to_node(Node) of
         {'error', _} ->
-            _ = gen_listener:cast(Srv, {'update_node', Node#node{connected='false'}}),
+            _ = gen_server:cast(Srv, {'update_node', Node#node{connected='false'}}),
             _ = maybe_start_node_pinger(Node),
             'ok';
         'ok' ->
-            gen_listener:cast(Srv, {'update_node', Node#node{started=kz_time:now_s()
-                                                            ,connected='true'
-                                                            }})
+            gen_server:cast(Srv, {'update_node', Node#node{started=kz_time:now_s()
+                                                          ,connected='true'
+                                                          }})
     end.
 
 -spec maybe_connect_to_node(fs_node()) -> 'ok' | {'error', any()}.
@@ -628,11 +632,17 @@ maybe_connect_to_node(#node{node=NodeName}=Node) ->
         {'error', _R}=E -> E;
         'ok' ->
             lager:notice("successfully connected to freeswitch node ~s", [NodeName]),
+            _ = freeswitch:no_legacy(NodeName),
             call_control_fs_nodeup(NodeName),
             'ok'
     end.
 
 -spec maybe_ping_node(fs_node()) -> 'ok' | {'error', any()}.
+maybe_ping_node(#node{node=NodeName
+                     ,connect_strategy='heartbeat'
+                     }=Node) ->
+    _ = ecallmgr_fs_pinger_sup:remove_node(NodeName),
+    maybe_start_node_handlers(Node);
 maybe_ping_node(#node{node=NodeName
                      ,cookie=Cookie
                      }=Node) ->
@@ -649,13 +659,16 @@ maybe_ping_node(#node{node=NodeName
 -spec maybe_start_node_handlers(fs_node()) -> 'ok' | {'error', any()}.
 maybe_start_node_handlers(#node{node=NodeName
                                ,client_version=Version
+                               ,connect_strategy=Strategy
                                ,cookie=Cookie
                                ,options=Props
                                }=Node) ->
-    try ecallmgr_fs_sup:add_node(NodeName, [{'cookie', Cookie}
-                                           ,{'client_version', Version}
-                                            | props:delete('cookie', Props)
-                                           ])
+    _ = freeswitch:no_legacy(NodeName),
+    try ecallmgr_fs_sup:add_node(NodeName, lists:usort([{'cookie', Cookie}
+                                                       ,{'client_version', Version}
+                                                       ,{'connect_strategy', Strategy}
+                                                        | Props
+                                                       ]))
     of
         {'ok', _} -> initialize_node_connection(Node);
         {'error', {'already_started', _}} -> 'ok';
@@ -666,11 +679,12 @@ maybe_start_node_handlers(#node{node=NodeName
             lager:warning("unexpected result trying to start ~s node handlers: ~-255p", [NodeName, _Else]),
             {'error', 'failed_starting_handlers'}
     catch
-        ?STACKTRACE(_, Reason, ST)
-        lager:warning("exception starting node ~s handlers: ~p", [NodeName, Reason]),
-        kz_util:log_stacktrace(ST),
-        {'error', Reason}
-        end.
+        _:Reason ->
+            ST = erlang:get_stacktrace(),
+            lager:warning("exception starting node ~s handlers: ~p", [NodeName, Reason]),
+            kz_util:log_stacktrace(ST),
+            {'error', Reason}
+    end.
 
 -spec initialize_node_connection(fs_node()) -> 'ok'.
 initialize_node_connection(#node{}=Node) ->
@@ -710,6 +724,7 @@ create_node(NodeName, Cookie, Options) ->
          ,cookie=get_fs_cookie(Cookie, Options)
          ,client_version=get_fs_client_version(NodeName)
          ,options=Options
+         ,connect_strategy=props:get_value('connect_strategy', Options, 'ping')
          }.
 
 -spec get_fs_cookie(atom(), kz_term:proplist()) -> atom().
@@ -721,7 +736,10 @@ get_fs_cookie(Cookie, _) when is_atom(Cookie) ->
 -spec get_fs_client_version(fs_node()) -> fs_node();
                            (atom()) -> kz_term:api_binary().
 get_fs_client_version(#node{node=NodeName}=Node) ->
-    Node#node{client_version=get_fs_client_version(NodeName)};
+    case get_fs_client_version(NodeName) of
+        'undefined' -> Node;
+        Version -> Node#node{client_version=Version}
+    end;
 get_fs_client_version(NodeName) ->
     try freeswitch:version(NodeName) of
         {'ok', Version} ->
@@ -746,6 +764,12 @@ start_node_stats(#node{}) ->
 
 -spec start_preconfigured_servers() -> 'ok'.
 start_preconfigured_servers() ->
+    start_preconfigured_servers(0).
+
+-spec start_preconfigured_servers(integer()) -> 'ok'.
+start_preconfigured_servers(5) ->
+    lager:info("no preconfigured servers available and default not available.");
+start_preconfigured_servers(Try) ->
     kz_util:put_callid(?DEFAULT_LOG_SYSTEM_ID),
     case get_configured_nodes() of
         Nodes when is_list(Nodes) ->
@@ -755,7 +779,7 @@ start_preconfigured_servers() ->
                 'ok' -> 'ok';
                 _ ->
                     timer:sleep(5 * ?MILLISECONDS_IN_SECOND),
-                    start_preconfigured_servers()
+                    start_preconfigured_servers(Try + 1)
             end
     end.
 
@@ -834,7 +858,7 @@ print_details([{NodeName, Node}|Nodes],Count) ->
             NodeSupPid ->
                 io:format("~-12s: ~p~n", [<<"Supervisor">>, NodeSupPid]),
                 io:format("Workers~n"),
-                _ = [io:format("    ~-15w ~s~n", [Pid, Name])
+                _ = [io:format("    ~-20w ~s~n", [Pid, Name])
                      || {Name, Pid, _, _} <- supervisor:which_children(NodeSupPid)
                     ],
                 print_node_details(NodeName)
@@ -872,6 +896,15 @@ print_summary([{_, Node}|Nodes], Count) ->
              ,[Node#node.node
               ,Node#node.connected
               ,Node#node.cookie
-              ,Node#node.client_version
+              ,print_version(Node#node.client_version)
               ]),
     print_summary(Nodes, Count + 1).
+
+-spec print_version(kz_term:ne_binary()) -> kz_term:ne_binary().
+print_version(<<"mod_kazoo ", Version/binary>>) -> Version;
+print_version(Version) -> Version.
+
+-spec nodedown(atom()) -> 'ok'.
+nodedown(Node) ->
+    ?SERVER ! {'nodedown', Node},
+    'ok'.

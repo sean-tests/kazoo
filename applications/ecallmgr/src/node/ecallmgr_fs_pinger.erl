@@ -106,7 +106,7 @@ handle_info('check_node_status', #state{node=Node, timeout=Timeout}=State) ->
             'ok' = ecallmgr_fs_nodes:nodeup(Node),
             {'stop', 'normal', State};
         _Else ->
-            lager:debug("node ~s not responding, waiting ~b seconds to ping again", [Node, Timeout div ?MILLISECONDS_IN_SECOND]),
+%            lager:debug("node ~s not responding, waiting ~b seconds to ping again", [Node, Timeout div ?MILLISECONDS_IN_SECOND]),
             erlang:send_after(Timeout, self(), 'check_node_status'),
             {'noreply', State, 'hibernate'}
     end;
