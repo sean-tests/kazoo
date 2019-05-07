@@ -17,9 +17,9 @@
 -export([find_node/1]).
 -export([init/1]).
 
--define(CHILDREN, [?SUPER('ecallmgr_fs_pinger_sup')
-                  ,?WORKER('ecallmgr_fs_nodes')
-                  ,?WORKER('ecallmgr_fs_channels')
+-define(CHILDREN, [?SUPER('ecallmgr_conference_control_sup')
+                  ,?WORKER('ecallmgr_fs_conferences_shared')
+                  ,?WORKER('ecallmgr_fs_conferences')
                   ]).
 
 %%==============================================================================
