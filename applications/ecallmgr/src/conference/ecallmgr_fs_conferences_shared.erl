@@ -279,18 +279,6 @@ maybe_start_conference(JObj, ConferenceId) ->
         'undefined' -> lager:info("no node found for the dial command, ignoring");
         MediaServer ->
             lager:info("starting conference ~s on ~s and dialing out", [ConferenceId, MediaServer]),
-%%             Node = kz_term:to_atom(MediaServer, 'true'),
-%%             AccountId = kz_json:get_ne_binary_value(<<"Account-ID">>, JObj),
-%%             Profile = kz_json:get_ne_binary_value(<<"Profile-Name">>, JObj, <<"default">>),
-%%             Command = list_to_binary([ConferenceId
-%%                                      ," create "
-%%                                      ,Profile
-%%                                      ," Account-ID="
-%%                                      ,AccountId
-%%                                      ]),
-%%             lager:debug("api: ~s", [Command]),
-%%             X = freeswitch:api(Node, 'conference', Command),
-%%             lager:debug_unsafe("CREATE CONF ~p", [X]),
             exec_dial(MediaServer, ConferenceId, JObj)
     end.
 
