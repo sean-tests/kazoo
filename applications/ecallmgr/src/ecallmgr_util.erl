@@ -189,12 +189,20 @@ send_cmds(Node, UUID, App, Cmds) ->
     Result.
 
 -spec cmd_is_empty({list(), list()}) -> boolean().
+cmd_is_empty({"kz_multiset_encoded", "^^"}) -> 'true';
+cmd_is_empty({_, "kz_multiset_encoded ^^"}) -> 'true';
 cmd_is_empty({"kz_multiset", "^^"}) -> 'true';
 cmd_is_empty({_, "kz_multiset ^^"}) -> 'true';
 cmd_is_empty(_) -> 'false'.
 
--spec dialplan_application(string()) -> string().
-dialplan_application("blind_xfer") -> "transfer";
+-spec dialplan_application(kz_term:ne_binary() | string()) -> kz_term:ne_binary().
+dialplan_application(App)
+  when is_list(App) ->
+    dialplan_application(kz_term:to_binary(App));
+dialplan_application(<<"blind_xfer">>) -> <<"transfer">>;
+dialplan_application(<<"kz_multiset">>) -> <<"kz_multiset_encoded">>;
+dialplan_application(<<"kz_export">>) -> <<"kz_export_encoded">>;
+dialplan_application(<<"att_xfer">>) -> <<"kz_att_xfer">>;
 dialplan_application(App) -> App.
 
 -spec get_expires(kz_term:proplist()) -> integer().
