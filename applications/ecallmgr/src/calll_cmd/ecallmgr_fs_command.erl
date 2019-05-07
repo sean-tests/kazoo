@@ -16,7 +16,7 @@
 
 -include("ecallmgr.hrl").
 
--define(FS_CMD_SET_MULTIVAR, 'kz_uuid_setvar_multi').
+-define(FS_CMD_SET_MULTIVAR, 'kz_uuid_setvar_multi_encoded').
 
 %%------------------------------------------------------------------------------
 %% @doc set channel and call variables in FreeSWITCH
