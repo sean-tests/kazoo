@@ -28,22 +28,21 @@
 exec_cmd(Node, UUID, JObj, ControlPID) ->
     exec_cmd(Node, UUID, JObj, ControlPID, kz_api:call_id(JObj)).
 
-exec_cmd(Node, UUID, JObj, ControlPid, UUID) ->
+exec_cmd(Node, UUID, JObj, _ControlPid, UUID) ->
     App = kapi_dialplan:application_name(JObj),
     AnonymizedJObj = enforce_privacy(Node, UUID, JObj),
     case get_fs_app(Node, UUID, AnonymizedJObj, App) of
         {'error', Msg} -> throw({'msg', Msg});
         {'return', Result} -> Result;
-        {AppName, 'noop'} ->
-            ecallmgr_call_control:event_execute_complete(ControlPid, UUID, AppName);
+        {_AppName, 'noop'} -> 'ok';
         {AppName, AppData} ->
-            ecallmgr_util:send_cmd(Node, UUID, AppName, AppData);
+            ecallmgr_util:send_cmd(Node, UUID, App, AppName, AppData);
         {AppName, AppData, NewNode} ->
-            ecallmgr_util:send_cmd(NewNode, UUID, AppName, AppData);
+            ecallmgr_util:send_cmd(NewNode, UUID, App, AppName, AppData);
         {AppName, AppData, NewNode, ExtraHeaders} ->
-            ecallmgr_util:send_cmd(NewNode, UUID, AppName, AppData, ExtraHeaders);
+            ecallmgr_util:send_cmd(NewNode, UUID, App, AppName, AppData, ExtraHeaders);
         [_|_]=Apps ->
-            [ecallmgr_util:send_cmd(Node, UUID, AppName, AppData) || {AppName, AppData} <- Apps]
+            ecallmgr_util:send_cmds(Node, UUID, App, [FSApp || FSApp <- Apps])
     end;
 exec_cmd(_Node, _UUID, JObj, _ControlPid, _DestId) ->
     lager:debug("command ~s not meant for us but for ~s"
@@ -82,26 +81,10 @@ enforce_privacy(Node, UUID, JObj) ->
                         fs_app() | fs_apps() |
                         {'return', 'error' | kz_term:ne_binary()} |
                         {'error', kz_term:ne_binary()}.
-get_fs_app(Node, UUID, JObj, <<"noop">>) ->
+get_fs_app(_Node, _UUID, JObj, <<"noop">>) ->
     case kapi_dialplan:noop_v(JObj) of
-        'false' ->
-            {'error', <<"noop failed to execute as JObj did not validate">>};
-        'true' ->
-            _ = ecallmgr_fs_bridge:maybe_b_leg_events(Node, UUID, JObj),
-            Args = case kz_api:msg_id(JObj) of
-                       'undefined' ->
-                           <<"Event-Subclass=kazoo::noop,Event-Name=CUSTOM"
-                             ",kazoo_event_name=CHANNEL_EXECUTE_COMPLETE"
-                             ",kazoo_application_name=noop"
-                           >>;
-                       NoopId ->
-                           <<"Event-Subclass=kazoo::noop,Event-Name=CUSTOM"
-                             ",kazoo_event_name=CHANNEL_EXECUTE_COMPLETE"
-                             ",kazoo_application_name=noop"
-                             ",kazoo_application_response=", (kz_term:to_binary(NoopId))/binary
-                           >>
-                   end,
-            {<<"event">>, Args}
+        'false' -> {'error', <<"noop failed to execute as JObj did not validate">>};
+        'true' -> {<<"noop">>, kz_api:msg_id(JObj)}
     end;
 
 get_fs_app(Node, UUID, JObj, <<"tts">>) ->
@@ -666,7 +649,6 @@ call_pickup(Node, UUID, JObj) ->
                          {'return', kz_term:ne_binary()} |
                          {'error', kz_term:ne_binary()}.
 connect_leg(Node, UUID, JObj) ->
-    _ = ecallmgr_fs_bridge:maybe_b_leg_events(Node, UUID, JObj),
     case prepare_app(Node, UUID, JObj) of
         {'execute', AppNode, AppUUID, AppJObj, AppTarget} ->
             get_call_pickup_app(AppNode, AppUUID, AppJObj, AppTarget, <<"call_pickup">>);
@@ -773,41 +755,27 @@ maybe_answer(Node, UUID, 'false') ->
                                     {kz_term:ne_binary(), kz_term:ne_binary()} |
                                     {'execute', atom(), kz_term:ne_binary(), kz_json:object(), kz_term:ne_binary()} |
                                     {'return', kz_term:ne_binary()}.
-prepare_app_maybe_move(Node, UUID, JObj, Target, OtherNode) ->
-    case kz_json:is_true(<<"Move-Channel-If-Necessary">>, JObj, 'false') of
-        'true' ->
-            lager:debug("target ~s is on ~s, not ~s...moving", [Target, OtherNode, Node]),
-            'true' = ecallmgr_channel_move:move(Target, OtherNode, Node),
-            {'execute', Node, UUID, JObj, Target};
-        'false' ->
-            lager:debug("target ~s is on ~s, not ~s, need to redirect", [Target, OtherNode, Node]),
+prepare_app_maybe_move(Node, UUID, _JObj, Target, OtherNode) ->
+    lager:debug("target ~s is on ~s, not ~s, need to redirect", [Target, OtherNode, Node]),
 
-            _ = prepare_app_usurpers(Node, UUID),
+    _ = prepare_app_usurpers(Node, UUID),
 
-            lager:debug("now issue the redirect to ~s", [OtherNode]),
-            _ = ecallmgr_channel_redirect:redirect(UUID, OtherNode),
-            {'return', <<"target is on different media server: ", (kz_term:to_binary(OtherNode))/binary>>}
-    end.
+    lager:debug("now issue the redirect to ~s", [OtherNode]),
+    _ = ecallmgr_channel_redirect:redirect(UUID, OtherNode),
+    {'return', <<"target is on different media server: ", (kz_term:to_binary(OtherNode))/binary>>}.
 
 -spec prepare_app_maybe_move_remote(atom(), kz_term:ne_binary(), kz_json:object(), kz_term:ne_binary(), atom(), kz_json:object()) ->
                                            {kz_term:ne_binary(), kz_term:ne_binary()} |
                                            {'execute', atom(), kz_term:ne_binary(), kz_json:object(), kz_term:ne_binary()} |
                                            {'return', kz_term:ne_binary()}.
-prepare_app_maybe_move_remote(Node, UUID, JObj, TargetCallId, TargetNode, ChannelStatusJObj) ->
-    case kz_json:is_true(<<"Move-Channel-If-Necessary">>, JObj, 'false') of
-        'true' ->
-            lager:debug("target ~s is on ~s, not ~s...moving", [TargetCallId, TargetNode, Node]),
-            'true' = ecallmgr_channel_move:move(TargetCallId, TargetNode, Node),
-            {'execute', Node, UUID, JObj, TargetCallId};
-        'false' ->
-            lager:debug("target ~s is on ~s, not ~s, need to redirect", [TargetCallId, TargetNode, Node]),
+prepare_app_maybe_move_remote(Node, UUID, _JObj, TargetCallId, TargetNode, ChannelStatusJObj) ->
+    lager:debug("target ~s is on ~s, not ~s, need to redirect", [TargetCallId, TargetNode, Node]),
 
-            _ = prepare_app_usurpers(Node, UUID),
+    _ = prepare_app_usurpers(Node, UUID),
 
-            lager:debug("now issue the redirect to ~s", [TargetNode]),
-            _ = ecallmgr_channel_redirect:redirect_remote(UUID, ChannelStatusJObj),
-            {'return', <<"target is on different media server: ", (kz_term:to_binary(TargetNode))/binary>>}
-    end.
+    lager:debug("now issue the redirect to ~s", [TargetNode]),
+    _ = ecallmgr_channel_redirect:redirect_remote(UUID, ChannelStatusJObj),
+    {'return', <<"target is on different media server: ", (kz_term:to_binary(TargetNode))/binary>>}.
 
 -spec prepare_app_usurpers(atom(), kz_term:ne_binary()) -> 'ok'.
 prepare_app_usurpers(Node, UUID) ->
@@ -942,6 +910,7 @@ get_conf_id_and_profile(JObj) ->
                                 {kz_term:ne_binary(), kz_term:ne_binary(), atom()} |
                                 {kz_term:ne_binary(), 'noop' | kz_term:ne_binary()}.
 get_conference_app(ChanNode, UUID, JObj, 'true') ->
+    lager:debug("getting conference app"),
     {ConfName, ConferenceConfig} = get_conf_id_and_profile(JObj),
     Cmd = list_to_binary([ConfName, "@", ConferenceConfig, get_conference_flags(JObj)]),
     case ecallmgr_fs_conferences:node(ConfName) of
@@ -953,12 +922,9 @@ get_conference_app(ChanNode, UUID, JObj, 'true') ->
             _ = maybe_set_nospeak_flags(ChanNode, UUID, JObj),
             {<<"conference">>, Cmd};
         {'ok', ConfNode} ->
-            lager:debug("channel is on node ~s, conference is on ~s, moving channel", [ChanNode, ConfNode]),
-            'true' = ecallmgr_channel_move:move(UUID, ChanNode, ConfNode),
-            lager:debug("channel has moved to ~s", [ConfNode]),
-            _ = maybe_set_nospeak_flags(ConfNode, UUID, JObj),
-            _ = ecallmgr_fs_command:export(ConfNode, UUID, [{<<"Hold-Media">>, <<"silence">>}]),
-            {<<"conference">>, Cmd, ConfNode}
+            lager:debug("channel is on node ~s, conference is on ~s, redirecting channel", [ChanNode, ConfNode]),
+            _ = ecallmgr_channel_redirect:redirect(UUID, ConfNode),
+            {'return', <<"target is on different media server: ", (kz_term:to_binary(ConfNode))/binary>>}
     end;
 
 get_conference_app(ChanNode, UUID, JObj, 'false') ->
