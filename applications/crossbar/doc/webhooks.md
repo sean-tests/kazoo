@@ -12,11 +12,11 @@ Web Hooks are subscriptions to allowed events that, when the event occurs, the e
 
 Key | Description | Type | Default | Required | Support Level
 --- | ----------- | ---- | ------- | -------- | -------------
-`custom_data` | These properties will be added to the event and will overwrite existing values. | `object()` |   | `false` |  
-`enabled` | Is the webhook enabled and running | `boolean()` | `true` | `false` |  
+`custom_data` | These properties will be added to the event and will overwrite existing values. | `object()` |   | `false` |
+`enabled` | Is the webhook enabled and running | `boolean()` | `true` | `false` |
 `hook` | The trigger event for a request being made to 'callback_uri'. | `string()` |   | `true` | `supported`
 `http_verb` | What HTTP method to use when contacting the server | `string('get' | 'post')` | `post` | `false` | `supported`
-`include_internal_legs` | Whether to filter out call legs that are internal to the system (loopback) | `boolean()` | `true` | `false` |  
+`include_internal_legs` | Whether to filter out call legs that are internal to the system (loopback) | `boolean()` | `true` | `false` |
 `include_subaccounts` | Should the webhook be fired for subaccount events. | `boolean()` |   | `false` | `supported`
 `name` | A friendly name for the webhook | `string()` |   | `true` | `supported`
 `retries` | Retry the request this many times (if it fails) | `integer()` | `2` | `false` | `supported`
@@ -95,6 +95,50 @@ curl -v -X GET \
    "request_id": "{REQUEST_ID}",
    "revision": "{REVISION}",
    "status": "success"
+}
+```
+
+## Get a sample of webhook event payloads
+
+> GET /v2/accounts/{ACCOUNT_ID}/webhooks/samples/{WEBHOOK_NAME}
+
+```shell
+curl -v -X GET \
+    -H "X-Auth-Token: {AUTH_TOKEN}" \
+    http://{SERVER}:8000/v2/webhooks/samples/{WEBHOOK_NAME}
+```
+
+### Example
+
+**Request:**
+
+```shell
+curl -H "'ontent-Type: application/json' 'http://{SERVER}:8000/v2/webhooks/samples/parking'
+```
+
+**Response:**
+
+```json
+{
+  "page_size": 1,
+  "data": [
+    {
+      "account_id": "5a2d994fbae69b1d6b01eb9f0e7dfe62",
+      "call_id": "OWU4NzEwOTgyZWNiMjM0MzI0NjRkZDc4MWVmMjEyOWI",
+      "callee_id_name": "Test Name",
+      "callee_id_number": "5355543456",
+      "caller_id_Number": "+15555432345",
+      "caller_id_name": "Superman",
+      "event_name": "PARK_PARKED",
+      "parking_slot": 1
+    }
+  ],
+  "revision": "{REVISION}",
+  "timestamp": "{TIMESTAMP}",
+  "version": "{VERSION}",
+  "node": "{NODE}",
+  "request_id": "{REQUEST_ID}",
+  "status": "success"
 }
 ```
 

@@ -7,7 +7,7 @@
 -module(cb_webhooks).
 
 -export([init/0
-        ,authorize/1
+        ,authorize/1, authorize/3
         ,authenticate/1
         ,allowed_methods/0, allowed_methods/1, allowed_methods/2
         ,resource_exists/0, resource_exists/1, resource_exists/2
@@ -24,6 +24,7 @@
 -define(CB_LIST, <<"webhooks/crossbar_listing">>).
 
 -define(PATH_TOKEN_ATTEMPTS, <<"attempts">>).
+-define(PATH_TOKEN_SAMPLES, <<"samples">>).
 
 -define(ATTEMPTS_BY_ACCOUNT, <<"webhooks/attempts_by_time_listing">>).
 -define(ATTEMPTS_BY_HOOK, <<"webhooks/attempts_by_hook_listing">>).
@@ -108,15 +109,31 @@ revise_schema(SchemaJObj, HNs) ->
         {'error', _E} -> lager:warning("failed to add hooks enum to schema: ~p", [_E])
     end.
 
--spec authorize(cb_context:context()) -> boolean().
+-spec authorize(cb_context:context()) ->
+                       boolean() |
+                       {'stop', cb_context:context()}.
 authorize(Context) ->
-    authorize(cb_context:req_verb(Context), cb_context:req_nouns(Context)).
+    is_authorize(Context, cb_context:req_verb(Context), cb_context:req_nouns(Context)).
 
--spec authorize(http_method(), req_nouns()) -> boolean().
-authorize(?HTTP_GET, [{<<"webhooks">>, []}]) ->
+-spec authorize(cb_context:context(), path_token(), path_token()) ->
+                       boolean() |
+                       {'stop', cb_context:context()}.
+authorize(Context, _, _) ->
+    is_authorize(Context, cb_context:req_verb(Context), cb_context:req_nouns(Context)).
+
+-spec is_authorize(cb_context:context(), http_method(), req_nouns()) ->
+                          boolean() |
+                          {'stop', cb_context:context()}.
+is_authorize(_, ?HTTP_GET, [{<<"webhooks">>, []}]) ->
     lager:debug("authorizing request"),
     'true';
-authorize(_Verb, _Nouns) -> 'false'.
+is_authorize(_, ?HTTP_GET, [{<<"webhooks">>, [?PATH_TOKEN_SAMPLES, _ = ?NE_BINARY]}]) ->
+    lager:debug("authorizing fetching webhook samples"),
+    'true';
+is_authorize(Context, _, [{<<"webhooks">>, _}]) ->
+    {'stop', cb_context:add_system_error('forbidden', Context)};
+is_authorize(_, _Verb, _Nouns) ->
+    'false'.
 
 -spec authenticate(cb_context:context()) -> boolean().
 authenticate(Context) ->
@@ -127,6 +144,9 @@ authenticate(Context) ->
                           'false'.
 authenticate(Context, ?HTTP_GET, [{<<"webhooks">>, []}]) ->
     lager:debug("authenticating request"),
+    {'true', Context};
+authenticate(Context, ?HTTP_GET, [{<<"webhooks">>, [?PATH_TOKEN_SAMPLES, _ = ?NE_BINARY]}]) ->
+    lager:debug("authenticating request for fetching webhook samples"),
     {'true', Context};
 authenticate(_Context, _Verb, _Nouns) -> 'false'.
 
@@ -149,6 +169,8 @@ allowed_methods(_WebhookId) ->
     [?HTTP_GET, ?HTTP_POST, ?HTTP_PATCH, ?HTTP_DELETE].
 
 -spec allowed_methods(path_token(), path_token()) -> http_methods().
+allowed_methods(?PATH_TOKEN_SAMPLES, _WebhookName) ->
+    [?HTTP_GET];
 allowed_methods(_WebhookId, ?PATH_TOKEN_ATTEMPTS) ->
     [?HTTP_GET].
 
@@ -165,6 +187,7 @@ resource_exists() -> 'true'.
 resource_exists(_WebhookId) -> 'true'.
 
 -spec resource_exists(path_token(), path_token()) -> 'true'.
+resource_exists(?PATH_TOKEN_SAMPLES, _WebhookName) -> 'true';
 resource_exists(_WebhookId, ?PATH_TOKEN_ATTEMPTS) -> 'true'.
 
 %%------------------------------------------------------------------------------
@@ -207,6 +230,8 @@ validate_webhook(Context, WebhookId, ?HTTP_DELETE) ->
     read(WebhookId, Context).
 
 -spec validate(cb_context:context(), path_token(), path_token()) -> cb_context:context().
+validate(Context, ?PATH_TOKEN_SAMPLES, WebhookName) ->
+    fetch_webhook_samples(Context, WebhookName);
 validate(Context, WebhookId=?NE_BINARY, ?PATH_TOKEN_ATTEMPTS) ->
     summary_attempts(Context, WebhookId).
 
@@ -355,6 +380,23 @@ summary_available(Context) ->
               ,'include_docs'
               ],
     crossbar_view:load(cb_context:set_account_db(C1, MasterAccountDb), ?AVAILABLE_HOOKS, Options).
+
+%%------------------------------------------------------------------------------
+%% @doc
+%% @end
+%%------------------------------------------------------------------------------
+-spec fetch_webhook_samples(cb_context:context(), kz_term:ne_binary()) -> cb_context:context().
+fetch_webhook_samples(Context, <<"webhooks_", _/binary>> = WebhookName) ->
+    Filename = <<WebhookName/binary, "-samples.json">>,
+    Path = filename:join(code:priv_dir(?APP), Filename),
+    case file:read_file(Path) of
+        {'ok', Bin} ->
+            crossbar_doc:handle_json_success(kz_json:decode(Bin), Context);
+        {'error', 'enoent'} ->
+            crossbar_util:response_bad_identifier(WebhookName, Context)
+    end;
+fetch_webhook_samples(Context, WebhookName) ->
+    fetch_webhook_samples(Context, <<"webhooks_", WebhookName/binary>>).
 
 -spec normalize_available(cb_context:context(), kz_json:object(), kz_json:objects()) ->
                                  kz_json:objects().
