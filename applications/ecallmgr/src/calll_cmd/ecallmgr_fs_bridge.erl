@@ -9,7 +9,6 @@
 
 -export([call_command/3
         ,unbridge/2
-        ,maybe_b_leg_events/3
         ,try_create_bridge_string/2
         ]).
 
@@ -32,14 +31,18 @@ call_command(Node, UUID, JObj) ->
 
             lager:debug("executing bridge on channel ~p", [UUID]),
 
-            {'ok', Channel} = ecallmgr_fs_channel:fetch(UUID, 'record'),
+            Channel = case ecallmgr_fs_channel:fetch(UUID, 'record') of
+                          {'ok', Chan} -> Chan;
+                          _ ->
+                              lager:warning("channel ~s not found in channels ets table. bypass_media may be affected", [UUID]),
+                              #channel{}
+                      end,
 
-            _ = handle_ringback(Node, UUID, JObj),
-            _ = maybe_early_media(Node, UUID, JObj, Endpoints),
-            _ = maybe_b_leg_events(Node, UUID, JObj),
             BridgeJObj = add_endpoints_channel_actions(Node, UUID, JObj),
 
-            Routines = [fun handle_hold_media/5
+            Routines = [fun handle_ringback/5
+                       ,fun maybe_early_media/5
+                       ,fun handle_hold_media/5
                        ,fun handle_secure_rtp/5
                        ,fun maybe_handle_bypass_media/5
                        ,fun handle_ccvs/5
@@ -47,7 +50,6 @@ call_command(Node, UUID, JObj) ->
                        ,fun pre_exec/5
                        ,fun handle_loopback/5
                        ,fun create_command/5
-                       ,fun post_exec/5
                        ],
             lager:debug("creating bridge dialplan"),
             XferExt = lists:foldr(fun(F, DP) ->
@@ -79,8 +81,8 @@ unbridge(UUID, JObj) ->
 %% @doc Bridge command helpers
 %% @end
 %%------------------------------------------------------------------------------
--spec handle_ringback(atom(), kz_term:ne_binary(), kz_json:object()) -> 'ok'.
-handle_ringback(Node, UUID, JObj) ->
+-spec handle_ringback(kz_term:proplist(), atom(), kz_term:ne_binary(), channel(), kz_json:object()) -> kz_term:proplist().
+handle_ringback(DP, Node, UUID, _Channel, JObj) ->
     case kz_json:get_first_defined([<<"Ringback">>
                                    ,[<<"Custom-Channel-Vars">>, <<"Ringback">>]
                                    ]
@@ -89,23 +91,37 @@ handle_ringback(Node, UUID, JObj) ->
     of
         'undefined' ->
             {'ok', Default} = ecallmgr_util:get_setting(<<"default_ringback">>),
-            ecallmgr_fs_command:set(Node, UUID, [{<<"ringback">>, kz_term:to_binary(Default)}]);
+            Props = [{<<"ringback">>, Default}],
+            Exports = ecallmgr_util:process_fs_kv(Node, UUID, Props, 'export'),
+            Args = ecallmgr_util:fs_args_to_binary(Exports),
+            [{"application", <<"kz_export_encoded ", Args/binary>>}
+             |DP
+            ];
         Media ->
             Stream = ecallmgr_util:media_path(Media, 'extant', UUID, JObj),
             lager:debug("bridge has custom ringback: ~s", [Stream]),
-            ecallmgr_fs_command:set(Node, UUID, [{<<"ringback">>, Stream}])
+            Props = [{<<"ringback">>, Stream}],
+            Exports = ecallmgr_util:process_fs_kv(Node, UUID, Props, 'export'),
+            Args = ecallmgr_util:fs_args_to_binary(Exports),
+            [{"application", <<"kz_export_encoded ", Args/binary>>}
+             |DP
+            ]
     end.
 
--spec maybe_early_media(atom(), kz_term:ne_binary(), kz_json:object(), kz_json:objects()) -> ecallmgr_util:send_cmd_ret().
-maybe_early_media(Node, UUID, JObj, Endpoints) ->
-    Separator = ecallmgr_util:get_dial_separator(JObj, Endpoints),
-    maybe_early_media_separator(Node, UUID, JObj, Separator).
-
--spec maybe_early_media_separator(atom(), kz_term:ne_binary(), kz_json:object(), kz_term:ne_binary()) -> ecallmgr_util:send_cmd_ret().
-maybe_early_media_separator(Node, UUID, _JObj, ?SEPARATOR_SIMULTANEOUS) ->
-    lager:debug("bridge is simultaneous to multiple endpoints, starting local ringing"),
-    ecallmgr_util:send_cmd(Node, UUID, <<"ring_ready">>, "");
-maybe_early_media_separator(_Node, _UUID, _, _) -> 'ok'.
+-spec maybe_early_media(kz_term:proplist(), atom(), kz_term:ne_binary(), channel(), kz_json:object()) -> kz_term:proplist().
+maybe_early_media(DP, _Node, _UUID, _Channel, JObj) ->
+    Endpoints = kz_json:get_list_value(<<"Endpoints">>, JObj, []),
+    case ecallmgr_util:get_dial_separator(JObj, Endpoints) of
+        ?SEPARATOR_SIMULTANEOUS ->
+            [{"application", <<"ring_ready">>}
+             |DP
+            ];
+        ?SEPARATOR_ENTERPRISE ->
+            [{"application", <<"ring_ready">>}
+             |DP
+            ];
+        _ -> DP
+    end.
 
 -spec handle_hold_media(kz_term:proplist(), atom(), kz_term:ne_binary(), channel(), kz_json:object()) -> kz_term:proplist().
 handle_hold_media(DP, _Node, UUID, _Channel, JObj) ->
@@ -227,17 +243,6 @@ handle_loopback(DP, _Node, _UUID, _Channel, JObj) ->
 pre_exec(DP, _Node, _UUID, _Channel, _JObj) ->
     [{"application", "set continue_on_fail=true"}
     ,{"application", "export sip_redirect_context=context_2"}
-    ,{"application", "set hangup_after_bridge=true"}
-    ,{"application", lists:concat(["export "
-                                  ,?CHANNEL_VAR_PREFIX, "Inception"
-                                  ,"="
-                                  ,"${", ?CHANNEL_VAR_PREFIX, "Inception}"
-                                  ])}
-    ,{"application", lists:concat(["export "
-                                  ,?CHANNEL_VAR_PREFIX, ?CALL_INTERACTION_ID
-                                  ,"="
-                                  ,"${", ?CHANNEL_VAR_PREFIX, ?CALL_INTERACTION_ID, "}"
-                                  ])}
      |DP
     ].
 
@@ -326,19 +331,6 @@ maybe_force_fax(_Node, _UUID, Endpoints, JObj) ->
         'undefined' -> [];
         Direction -> [{[<<"Custom-Channel-Vars">>, <<"Force-Fax">>], Direction}]
     end.
-
--spec post_exec(kz_term:proplist(), atom(), kz_term:ne_binary(), channel(), kz_json:object()) -> kz_term:proplist().
-post_exec(DP, _Node, _UUID, _Channel, _JObj) ->
-    Event = ecallmgr_util:create_masquerade_event(<<"bridge">>, <<"CHANNEL_EXECUTE_COMPLETE">>),
-    [{"application", Event}
-    ,{"application", "park "}
-     |DP
-    ].
-
--spec maybe_b_leg_events(atom(), kz_term:ne_binary(), kz_json:object()) -> 'ok'.
-maybe_b_leg_events(Node, UUID, JObj) ->
-    Events = kz_json:get_value(<<"B-Leg-Events">>, JObj, []),
-    ecallmgr_call_events:listen_for_other_leg(Node, UUID, Events).
 
 -spec add_endpoints_channel_actions(atom(), kz_term:ne_binary(), kz_json:object()) -> kz_json:object().
 add_endpoints_channel_actions(Node, UUID, JObj) ->
