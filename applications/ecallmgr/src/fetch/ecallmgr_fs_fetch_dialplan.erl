@@ -42,8 +42,14 @@ run(#{}=Map) ->
                ,{fun add_time_marker/2, start_processing}
                ,fun(M) -> M#{callback => fun process/1} end
                ,fun(M) -> M#{options => []} end
+               ,fun(M) -> M#{start_result => ecallmgr_call_control_sup:start_proc(M)} end
+               ,fun wait_for_exit/1
                ],
-    ecallmgr_call_control_sup:start_proc(kz_maps:exec(Routines, Map)).
+    kz_maps:exec(Routines, Map).
+
+wait_for_exit(#{start_result := Result}=M) ->
+    ecallmgr_call_sup:wait_for_exit(Result, M).
+
 
 process(#{payload := JObj}=Map) ->
     kz_util:put_callid(JObj),

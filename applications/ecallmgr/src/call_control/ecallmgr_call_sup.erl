@@ -7,12 +7,12 @@
 -module(ecallmgr_call_sup).
 -behaviour(supervisor).
 
--export([start_link/0
-%        ,pool_name/0
-        ]).
+-export([start_link/0]).
 
 -export([start_control_process/1]).
--export([control_context/0, control_context/1, release_context/1]).
+-export([control_context/0, control_context/1]).
+-export([release_context/1]).
+-export([wait_for_exit/2]).
 
 -export([init/1]).
 
@@ -23,7 +23,7 @@
 
 -define(USE_POOL_KEY,[<<"call_control">>, <<"use_pool">>]).
 %-define(USE_POOL, kapps_config:get_boolean(?APP_NAME, ?USE_POOL_KEY, 'false')).
--define(USE_POOL, 'true').
+-define(USE_POOL, 'false').
 
 -define(POOL_NAME, 'ectl_amqp_pool').
 
@@ -135,3 +135,12 @@ release_context(#{exit_fun := Fun}=Context) ->
     Fun(Context),
     'ok';
 release_context(_) -> 'ok'.
+
+-spec wait_for_exit(tuple(), map()) -> 'ok'.
+wait_for_exit({'error', _}, Ctx) ->
+    release_context(Ctx);
+wait_for_exit({'ok', Pid}, _Ctx) ->
+    MRef = erlang:monitor(process, Pid),
+    receive
+        {'DOWN', MRef, _, _, _} -> 'ok'
+    end.

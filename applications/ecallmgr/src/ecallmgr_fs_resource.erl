@@ -85,7 +85,7 @@ handle_originate_req_if_possible(JObj, _Node, {'error', _E}) ->
     kz_amqp_worker:cast(JObj, fun kapi_resource:publish_originate_req/1);
 handle_originate_req_if_possible(JObj, Node, {'ok', Context}) ->
     lager:debug("received originate request for node ~s, starting originate process", [Node]),
-    ecallmgr_originate_sup:start_originate_proc(Node, JObj, Context).
+    ecallmgr_call_sup:wait_for_exit(ecallmgr_originate_sup:start_originate_proc(Node, JObj, Context), Context).
 
 %%%=============================================================================
 %%% gen_server callbacks
