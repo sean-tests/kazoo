@@ -2,7 +2,7 @@
     "account_id": "7600efb3424dc4b79854521fd4563d0a",
     "authorized_by": "3048e0eb0fbb1d9eb35987d7ea29d443",
     "event_category": "notification",
-    "event_name": "port_cancel",
+    "event_name": "port_request",
     "local_number": false,
     "number": [
         "+15554563456"

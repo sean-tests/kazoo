@@ -5,6 +5,6 @@
     "emergency_caller_id_number": "+15555463456",
     "event_category": "notification",
     "event_name": "denied_emergency_bridge",
-    "outbound_caller_id_name": "Outbound Callr ID Name",
+    "outbound_caller_id_name": "Outbound Caller ID Name",
     "outbound_caller_id_number": "+15554561234"
 }

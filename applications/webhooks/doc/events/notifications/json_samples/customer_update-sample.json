@@ -1,9 +1,14 @@
 {
-    "account_id": "ullamco",
-    "databag": "ipsum adipisicing sed amet eiusmod",
+    "account_id": "7600efb3424dc4b79854521fd4563d0a",
+    "databag": {
+        "field1": "value1",
+        "fied2": {
+            "subfield1": "subvaule1"
+        }
+    },
     "event_category": "notification",
     "event_name": "customer_update",
-    "recipient_id": "ipsum anim et",
-    "template_id": "magna aliquip reprehenderit aliqua tempor",
-    "user_type": "fu"
+    "recipient_id": "7600efb3424dc4b79854521fd4563d0a",
+    "template_id": "928739525529ecab3f028d38456c8d32",
+    "user_type": "all_users"
 }

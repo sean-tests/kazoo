@@ -1,7 +1,7 @@
 {
-    "Event-Category": "notification",
-    "Event-Name": "service_added",
-    "Items": [
+    "event_category": "notification",
+    "event_name": "service_added",
+    "items": [
         {
             "billable": 2,
             "category": "users",
@@ -42,7 +42,7 @@
             "total": 14
         }
     ],
-    "Timestamp": 63667531037,
+    "timestamp": 63667531037,
     "account_id": "7600efb3424dc4b79854521fd4563d0a",
     "audit_log": {
         "audit": {

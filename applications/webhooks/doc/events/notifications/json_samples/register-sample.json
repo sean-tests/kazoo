@@ -1,10 +1,12 @@
 {
-    "aAccount_db": "account%2F76%2F00%2Fefb3424dc4b79854521fd4563d0a",
+    "account_db": "account%2F76%2F00%2Fefb3424dc4b79854521fd4563d0a",
     "account_id": "7600efb3424dc4b79854521fd4563d0a",
     "authorizing_id": "7a5bbeb0dc49a1d477a5cd0ae7bc8e7c",
     "authorizing_type": "device",
     "call_id": "4d9b215f5ac39dcf9115d247980b2993",
     "contact": "sip:user_zDc455@10.2.0.1:53764;methods=\"INVITE, ACK, BYE, CANCEL, OPTIONS, INFO, MESSAGE, SUBSCRIBE, NOTIFY, PRACK, UPDATE, REFER\"",
+    "event_category": "notification",
+    "event_name": "register",
     "event_timestamp": 63667524991,
     "expires": 540,
     "from_host": "imaginary.sip.local",

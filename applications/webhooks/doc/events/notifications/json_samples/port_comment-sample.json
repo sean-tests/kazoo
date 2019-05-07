@@ -10,7 +10,7 @@
         "user_id": "a7c71418a195554c89080bee8cf9c84d"
     },
     "event_category": "notification",
-    "event_name": "port_cancel",
+    "event_name": "port_comment",
     "local_number": false,
     "number": [
         "+15554563456"
