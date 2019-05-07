@@ -1,5 +1,5 @@
 %%%-----------------------------------------------------------------------------
-%%% @copyright (C) 2011-2018, 2600Hz
+%%% @copyright (C) 2011-2019, 2600Hz
 %%% @doc
 %%% @author Karl Anderson
 %%% @author James Aimonetti
@@ -205,7 +205,7 @@ generate_ccvs(_EndpointId, AccountId, Endpoint) ->
               ,fun presence_id/2
               ,fun add_alert_info/2
               ,fun hold_music/2
-%%               ,fun add_codecs/2
+               %%               ,fun add_codecs/2
               ],
     lists:foldl(fun(Fun, Acc) -> Fun(Endpoint, Acc) end, CCVs, CCVFuns).
 
@@ -248,24 +248,24 @@ generate_profile(EndpointId, AccountId, Endpoint, Options) ->
 
     CID = {CIDNumber, CIDName} = kz_attributes:get_endpoint_cid(<<"internal">>, Endpoint),
     CED = {CEDNumber, CEDName} = kz_attributes:get_endpoint_cid(<<"external">>, Endpoint),
-    
+
     {Number, Name} = case props:get_ne_binary_value('kcid_type', Options, <<"Internal">>) of
                          <<"Internal">> -> CID;
                          _ -> CED
                      end,
-    
+
     CIDType = case props:get_ne_binary_value('fetch_type', Options, <<"sip_auth">>) of
                   <<"sip_auth">> -> <<"Caller">>;
                   _ -> <<"Callee">>
               end,
-    
+
     CPVs = [
             {<<CIDType/binary,"-ID-Number">>, Number}
            ,{<<CIDType/binary,"-ID-Name">>, Name}
-%%            ,{<<"Callee-ID-Number">>, CIDNumber}
-%%            ,{<<"Callee-ID-Name">>, CIDName}
-%%            ,{<<"Outbound-Callee-ID-Number">>, CIDNumber}
-%%            ,{<<"Outbound-Callee-ID-Name">>, CIDName}
+            %%            ,{<<"Callee-ID-Number">>, CIDNumber}
+            %%            ,{<<"Callee-ID-Name">>, CIDName}
+            %%            ,{<<"Outbound-Callee-ID-Number">>, CIDNumber}
+            %%            ,{<<"Outbound-Callee-ID-Name">>, CIDName}
            ,{<<"Internal-Caller-ID-Number">>, CIDNumber}
            ,{<<"Internal-Caller-ID-Name">>, CIDName}
            ,{<<"External-Caller-ID-Number">>, CEDNumber}
@@ -274,8 +274,8 @@ generate_profile(EndpointId, AccountId, Endpoint, Options) ->
            ,{<<"Endpoint-ID">>, EndpointId}
            ,{<<"Endpoint-Caller-ID-Number">>, CIDNumber}
            ,{<<"Endpoint-Caller-ID-Name">>, CIDName}
-           
-%%           ,{<<"Codecs">>, get_codecs(Endpoint)}
+
+            %%           ,{<<"Codecs">>, get_codecs(Endpoint)}
            ],
     Profile = [{<<"Domain-Name">>, AccountId}
               ,{<<"User-ID">>, EndpointId}
