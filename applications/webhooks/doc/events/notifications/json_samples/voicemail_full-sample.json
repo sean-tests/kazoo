@@ -1,8 +1,0 @@
-{
-    "account_id": "7600efb3424dc4b79854521fd4563d0a",
-    "event_category": "notification",
-    "event_name": "voicemail_full",
-    "max_message_count": 100,
-    "message_count": 100,
-    "voicemail_box": "e710faae69294bbac24f4d18dd3fc6df"
-}

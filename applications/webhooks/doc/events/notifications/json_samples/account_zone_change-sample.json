@@ -1,8 +1,0 @@
-{
-    "account_id": "7600efb3424dc4b79854521fd4563d0a",
-    "event_category": "notification",
-    "event_name": "account_zone_change",
-    "zones": {
-        "home": "Zone"
-    }
-}
