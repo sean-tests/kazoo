@@ -1,9 +1,9 @@
 {
     "account_id": "ullamco",
+    "databag": "ipsum adipisicing sed amet eiusmod",
     "event_category": "notification",
     "event_name": "customer_update",
     "recipient_id": "ipsum anim et",
-    "user_type": "fu",
-    "databag": "ipsum adipisicing sed amet eiusmod",
-    "template_id": "magna aliquip reprehenderit aliqua tempor"
+    "template_id": "magna aliquip reprehenderit aliqua tempor",
+    "user_type": "fu"
 }

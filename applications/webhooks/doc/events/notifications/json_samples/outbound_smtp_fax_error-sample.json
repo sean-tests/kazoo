@@ -1,15 +1,17 @@
 {
-    "account_id": "amet adipisicing id",
-    "errors": "laboris veniam ipsum minim",
-    "fax_from_email": "est nisi in cillum",
-    "owner_id": "sint sunt nost",
-    "event_name": "outbound_smtp_fax_error",
-    "faxbox_id": "pariatur id eiusmod occaecat sunt",
-    "faxbox_timezone": "consequat",
-    "fax_to_email": "officia nostrud commodo",
-    "original_number": "quis",
-    "faxbox_name": "in dolor nisi proident",
-    "number": "fugiat",
+    "account_id": "7600efb3424dc4b79854521fd4563d0a",
+    "errors": [
+        "Message decode failed"
+    ],
     "event_category": "notification",
-    "timestamp": "in proident nulla"
+    "event_name": "outbound_smtp_fax_error",
+    "fax_from_email": "2600hzfax@gmail.com",
+    "fax_to_email": "+16282037479@3b91b1d0.fax.sandbox.2600hz.com",
+    "faxbox_id": "7adf6ba4f1294427a3db19a8be1a771e",
+    "faxbox_name": "in dolor nisi proident",
+    "faxbox_timezone": "consequat",
+    "number": "+15554566778",
+    "original_number": "+15554566778",
+    "owner_id": "00320bd1f3b1ce7cbd315c0edb97f475",
+    "timestamp": 63724396563
 }

@@ -1,18 +1,40 @@
 {
-    "fax_id": "est dolor",
-    "fax_jobid": "fugiat ullamco ",
-    "caller_id_name": "sit mollit nulla voluptate dolor",
-    "event_name": "outbound_fax_error",
-    "fax_error": "id esse",
-    "fax_info": "et do",
-    "callee_id_name": "cons",
-    "call_id": "mollit",
-    "fax_notifications": "sed est Exce",
-    "event_category": "notification",
-    "fax_timestamp": "dolore",
-    "account_id": "labore in ullamco in",
-    "caller_id_number": "aliqua sed dolor magna",
-    "callee_id_number": "magna ad enim cillum esse",
-    "faxbox_id": "fugiat",
-    "owner_id": "in in"
+    "account_db": "account%2F76%2F00%2Fefb3424dc4b79854521fd4563d0a-201905",
+    "account_id": "7600efb3424dc4b79854521fd4563d0a",
+    "call_id": "e58ddc2bcb4f9b6c7ec2b2f4a355ba26d5f6",
+    "callee_id_name": "+16282037452",
+    "callee_id_number": "+16282037452",
+    "caller_id_name": "Fax  TEST",
+    "caller_id_number": "+15554566778",
+    "fax_error": "unknown error",
+    "fax_id": "201905-9bf2048ad589ca0aed1b72cf2898a968",
+    "fax_info": {
+        "fax_bad_rows": "0",
+        "fax_doc_db": "account/76/00/efb3424dc4b79854521fd4563d0a-201905",
+        "fax_doc_id": "201905-3513f829b23ce4ec8e4bc372701a0cae",
+        "fax_ecn_used": false,
+        "fax_identity_name": "2600Hz Fax Printer",
+        "fax_identity_number": "+1 556 567 1234",
+        "fax_image_resolution": "0x0",
+        "fax_image_size": "0",
+        "fax_local_station_id": "+1 556 567 1234",
+        "fax_result_code": "49",
+        "fax_result_text": "The call dropped prematurely",
+        "fax_success": false,
+        "fax_timezone": "America/Los_Angeles",
+        "fax_total_pages": "0",
+        "fax_transfer_rate": "14400",
+        "fax_transferred_pages": "0"
+    },
+    "fax_jobid": "201905-9bf2048ad589ca0aed1b72cf2898a968",
+    "fax_notifications": {
+        "email": {
+            "send_to": [
+                "user@test.com"
+            ]
+        }
+    },
+    "fax_timestamp": 63724396853,
+    "fax_timezone": "America/Los_Angeles",
+    "faxbox_id": "464c24e325fab974f8547d585d60eee7"
 }

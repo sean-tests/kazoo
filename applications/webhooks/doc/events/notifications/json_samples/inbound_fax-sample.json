@@ -1,20 +1,50 @@
 {
-    "account_id": "laborum dolore",
-    "fax_id": "consectetur cupidatat deserunt l",
-    "from_realm": "in magna dolor",
-    "from_user": "consectetur est consequat",
-    "to_realm": "eiusmod magna fugiat",
-    "to_user": "minim consequat",
-    "fax_info": "fugiat ea et",
-    "fax_notifications": "voluptate qui",
-    "call_id": "amet",
-    "caller_id_name": "nulla Ut quis ad",
-    "owner_id": "Duis exercitation",
-    "event_name": "inbound_fax",
+    "account_id": "7600efb3424dc4b79854521fd4563d0a",
+    "call_id": "268743707_92220889@10.23.9.32",
+    "callee_id_name": "+16282037452",
+    "callee_id_number": "+16282037452",
+    "caller_id_name": "+15554566778",
+    "caller_id_number": "+15554566778",
     "event_category": "notification",
-    "callee_id_number": "sint do",
-    "fax_timestamp": "irure Ut dolore voluptate Duis",
-    "callee_id_name": "dolor qui minim commodo ipsum",
-    "caller_id_number": "irure",
-    "faxbox_id": "dolore tempor aliquip adipisicing"
+    "event_name": "inbound_fax",
+    "fax_id": "201905-3513f829b23ce4ec8e4bc372701a0cae",
+    "fax_info": {
+        "fax_bad_rows": "0",
+        "fax_doc_db": "account/76/00/efb3424dc4b79854521fd4563d0a-201905",
+        "fax_doc_id": "201905-3513f829b23ce4ec8e4bc372701a0cae",
+        "fax_ecm_used": false,
+        "fax_encoding": "4",
+        "fax_encoding_name": "T.4 2_D",
+        "fax_file_image_pixel_size": "1728x2232",
+        "fax_file_image_resolution": "7874x7874",
+        "fax_identity_name": "2600Hz Fax Printer",
+        "fax_identity_number": "+1 556 567 1234",
+        "fax_image_pixel_size": "1728x2232",
+        "fax_image_resolution": "7874x7874",
+        "fax_image_size": "31932",
+        "fax_local_station_id": "+1 556 567 1234",
+        "fax_longest_bad_row_run": "0",
+        "fax_remote_station_id": "+1 555 456 6778",
+        "fax_result_code": "0",
+        "fax_result_text": "OK",
+        "fax_success": true,
+        "fax_timezone": "America/Los_Angeles",
+        "fax_total_pages": "2",
+        "fax_transfer_rate": "9600",
+        "fax_transferred_pages": "2"
+    },
+    "fax_notifications": {
+        "email": {
+            "send_to": [
+                "user1@test.com"
+            ]
+        }
+    },
+    "fax_timestamp": 63724396563,
+    "faxbox_id": "7adf6ba4f1294427a3db19a8be1a771e",
+    "from_realm": "10.20.0.1",
+    "from_user": "+15554566778",
+    "owner_id": "00320bd1f3b1ce7cbd315c0edb97f475",
+    "to_realm": "192.168.0.1",
+    "to_user": "+15565671234"
 }

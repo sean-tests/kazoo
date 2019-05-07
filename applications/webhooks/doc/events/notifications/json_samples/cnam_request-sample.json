@@ -1,11 +1,13 @@
 {
-    "account_id": "in",
-    "cnam": "minim ea dese",
-    "number": "ea sed qui proident cillum",
-    "number_state": "occaecat consectetur",
-    "request": "ipsum aliquip dolor",
-    "acquired_for": "occaecat sit enim velit",
+    "account_id": "7600efb3424dc4b79854521fd4563d0a",
+    "acquired_for": "7600efb3424dc4b79854521fd4563d0a",
+    "cnam": {
+        "display_name": "my CNAM",
+        "inbound_lookup": true
+    },
+    "event_category": "notification",
     "event_name": "cnam_request",
-    "local_number": "ea irure reprehenderit ad quis",
-    "event_category": "notification"
+    "local_number": false,
+    "number": "(555) 543 - 4556",
+    "number_state": "in_service"
 }
