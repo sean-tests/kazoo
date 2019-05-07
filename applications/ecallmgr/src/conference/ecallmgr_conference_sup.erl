@@ -3,7 +3,7 @@
 %%% @doc
 %%% @end
 %%%-----------------------------------------------------------------------------
--module(ecallmgr_fs_sup).
+-module(ecallmgr_conference_sup).
 
 -behaviour(supervisor).
 
