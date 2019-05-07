@@ -55,7 +55,6 @@
         ,from/1, from_user/1, from_realm/1
         ,to/1, to_user/1, to_realm/1
         ,request/1, request_user/1, request_realm/1
-        ,is_call_setup/1
         ]).
 
 -include("kz_documents.hrl").
@@ -402,7 +401,3 @@ request_user(JObj) ->
 -spec request_realm(data()) -> kz_term:api_binary().
 request_realm(JObj) ->
     kz_json:get_ne_binary_value(<<"Request-Realm">>, JObj).
-
--spec is_call_setup(data()) -> boolean().
-is_call_setup(JObj) ->
-    kz_json:is_true(<<"Call-Setup">>, JObj, 'false').
