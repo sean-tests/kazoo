@@ -287,7 +287,7 @@ idle_alert_timeout() ->
 -spec handle_data(atom(), binary(), pid()) -> any().
 handle_data(Node, Data, Channel) ->
     try binary_to_term(Data) of
-        {'event', 'json', JObj} -> 
+        {'event', 'json', JObj} ->
             kz_util:spawn(fun handle_event/3, [Node, JObj, Channel]);
         Else -> {'error', {'not_handled', Else}}
     catch

@@ -1143,7 +1143,7 @@ handle_direct(JObj, #state{fetch_id=FetchId
                           }=State) ->
     case kz_call_event:custom_channel_var(JObj, <<"Fetch-ID">>) of
         FetchId ->
-            ReplacedBy = kz_json:get_ne_binary_value(<<"Connecting-Leg-A-UUID">>, JObj),            
+            ReplacedBy = kz_json:get_ne_binary_value(<<"Connecting-Leg-A-UUID">>, JObj),
             case ecallmgr_fs_channel:fetch(ReplacedBy) of
                 {'ok', _Channel} ->
                     {'noreply', handle_sofia_replaced(ReplacedBy, State)};
