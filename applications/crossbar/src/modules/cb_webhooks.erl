@@ -64,49 +64,60 @@ init() ->
 
 -spec init_master_account_db() -> 'ok'.
 init_master_account_db() ->
-    case kapps_util:get_master_account_db() of
-        {'ok', MasterAccountDb} ->
-            maybe_revise_schema(MasterAccountDb);
-        {'error', _E} ->
-            lager:warning("master account not set yet, unable to load view and revise schema: ~p", [_E])
-    end.
+    maybe_revise_schema(get_available_hook_ids()).
 
--spec maybe_revise_schema(kz_term:ne_binary()) -> 'ok'.
-maybe_revise_schema(MasterAccountDb) ->
+maybe_revise_schema([]) ->
+    'ok';
+maybe_revise_schema(HookIds) ->
     case kz_json_schema:load(<<"webhooks">>) of
-        {'ok', SchemaJObj} -> maybe_revise_schema(MasterAccountDb, SchemaJObj);
+        {'ok', SchemaJObj} -> maybe_revise_schema(HookIds, SchemaJObj);
         {'error', _E} ->
             lager:warning("failed to find webhooks schema: ~p", [_E])
     end.
 
--spec maybe_revise_schema(kz_term:ne_binary(), kz_json:object()) -> 'ok'.
-maybe_revise_schema(MasterDb, SchemaJObj) ->
+-spec maybe_revise_schema(kz_term:ne_binaries(), kz_json:object()) -> 'ok'.
+maybe_revise_schema(HookIds, SchemaJObj) ->
+    HookNames = lists:usort([<<"all">> | HookIds]),
+    Updated = kz_json:set_value([<<"properties">>, <<"hook">>, <<"enum">>], HookNames, SchemaJObj),
+
+    case kz_json:are_equal(kz_doc:public_fields(SchemaJObj), kz_doc:public_fields(Updated)) of
+        'true' -> 'ok';
+        'false' ->
+            case kz_datamgr:save_doc(?KZ_SCHEMA_DB, Updated) of
+                {'ok', _} -> lager:info("added hooks enum to schema: ~p", [HookNames]);
+                {'error', _E} -> lager:warning("failed to add hooks enum to schema: ~p", [_E])
+            end
+    end.
+
+-spec get_available_hook_ids() -> kz_term:ne_binaries().
+get_available_hook_ids() ->
+    case kapps_util:get_master_account_db() of
+        {'ok', MasterAccountDb} ->
+            get_available_hook_ids(MasterAccountDb);
+        {'error', _E} ->
+            lager:warning("master account not set yet: ~p", [_E]),
+            []
+    end.
+
+-spec get_available_hook_ids(kz_term:ne_binary()) -> kz_term:ne_binaries().
+get_available_hook_ids(MasterDb) ->
     case kz_datamgr:get_results(MasterDb, ?AVAILABLE_HOOKS) of
         {'ok', []} ->
-            lager:warning("no hooks are registered; have you started the webhooks app?");
+            lager:warning("no hooks are registered; have you started the webhooks app?"),
+            [];
         {'error', _E} ->
-            lager:warning("failed to find registered webhooks: ~p", [_E]);
+            lager:warning("failed to find registered webhooks: ~p", [_E]),
+            [];
         {'ok', Hooks} ->
             ToRemoveHooks = [<<"callflow">>
                             ,<<"inbound_fax">>
                             ,<<"outbound_fax">>
                             ,<<"skel">>
                             ],
-            revise_schema(SchemaJObj, [Id
-                                       || <<"webhooks_", Id/binary>> <- [kz_doc:id(Hook) || Hook <- Hooks],
-                                          not lists:member(Id, ToRemoveHooks)
-                                      ])
-    end.
-
-%% FIXME: consider using kz_datamgr:update_doc or check if the document
-%% has a change to save.
--spec revise_schema(kz_json:object(), kz_term:ne_binaries()) -> 'ok'.
-revise_schema(SchemaJObj, HNs) ->
-    HookNames = [<<"all">> | HNs],
-    Updated = kz_json:set_value([<<"properties">>, <<"hook">>, <<"enum">>], HookNames, SchemaJObj),
-    case kz_datamgr:save_doc(?KZ_SCHEMA_DB, Updated) of
-        {'ok', _} -> lager:info("added hooks enum to schema: ~p", [HookNames]);
-        {'error', _E} -> lager:warning("failed to add hooks enum to schema: ~p", [_E])
+            [Id
+             || <<"webhooks_", Id/binary>> <- [kz_doc:id(Hook) || Hook <- Hooks],
+                not lists:member(Id, ToRemoveHooks)
+            ]
     end.
 
 -spec authorize(cb_context:context()) ->
@@ -386,17 +397,45 @@ summary_available(Context) ->
 %% @end
 %%------------------------------------------------------------------------------
 -spec fetch_webhook_samples(cb_context:context(), kz_term:ne_binary()) -> cb_context:context().
-fetch_webhook_samples(Context, <<"webhooks_", _/binary>> = WebhookName) ->
-    Filename = <<WebhookName/binary, "-samples.json">>,
+fetch_webhook_samples(Context, WebhookName) ->
+    case fetch_webhook_samples(WebhookName) of
+        {'ok', JObjs} ->
+            crossbar_doc:handle_json_success(JObjs, Context);
+        {'error', 'not_found'} ->
+            crossbar_util:response_bad_identifier(WebhookName, Context);
+        {'error', _} ->
+            cb_context:add_system_error('datastore_fault', Context)
+    end.
+
+-spec fetch_webhook_samples(kz_term:ne_binary() | kz_term:ne_binaries()) ->
+                                   {'ok', kz_json:objects()} |
+                                   {'error', any()}.
+fetch_webhook_samples(<<"webhooks_all">>) ->
+    fetch_webhook_sample_files(get_available_hook_ids(), []);
+fetch_webhook_samples(<<"webhooks_", WebhookName/binary>>) ->
+    fetch_webhook_sample_files([WebhookName], []);
+fetch_webhook_samples(WebhookName) ->
+    fetch_webhook_samples(<<"webhooks_", WebhookName/binary>>).
+
+-spec fetch_webhook_sample_files(kz_term:ne_binaries(), kz_json:objects()) ->
+                                        {'ok', kz_json:objects()} |
+                                        {'error', any()}.
+fetch_webhook_sample_files([], []) ->
+    {'error', 'not_found'};
+fetch_webhook_sample_files([], Acc) ->
+    {'ok', Acc};
+fetch_webhook_sample_files([WebhookName|WebhookNames], Acc) ->
+    Filename = <<"webhooks_", WebhookName/binary, "-samples.json">>,
     Path = filename:join(code:priv_dir(?APP), Filename),
     case file:read_file(Path) of
         {'ok', Bin} ->
-            crossbar_doc:handle_json_success(kz_json:decode(Bin), Context);
+            fetch_webhook_sample_files(WebhookNames, Acc ++ kz_json:decode(Bin));
         {'error', 'enoent'} ->
-            crossbar_util:response_bad_identifier(WebhookName, Context)
-    end;
-fetch_webhook_samples(Context, WebhookName) ->
-    fetch_webhook_samples(Context, <<"webhooks_", WebhookName/binary>>).
+            {'error', 'not_found'};
+        {'error', _Reason}=Error ->
+            lager:debug("failed to read file ~s: ~p", [Path, _Reason]),
+            Error
+    end.
 
 -spec normalize_available(cb_context:context(), kz_json:object(), kz_json:objects()) ->
                                  kz_json:objects().
