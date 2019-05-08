@@ -1172,12 +1172,8 @@ create_sip_endpoint(Endpoint, Properties, #clid{}=Clid, Call) ->
                     ,{<<"Route">>, kz_json:get_ne_binary_value(<<"route">>, SIPJObj)}
                     ,{<<"Proxy-IP">>, kz_json:get_ne_binary_value(<<"proxy">>, SIPJObj)}
                     ,{<<"Forward-IP">>, kz_json:get_ne_binary_value(<<"forward">>, SIPJObj)}
-                    ,{<<"Caller-ID-Name">>, Clid#clid.caller_name}
-                    ,{<<"Caller-ID-Number">>, Clid#clid.caller_number}
                     ,{<<"Outbound-Caller-ID-Number">>, Clid#clid.caller_number}
                     ,{<<"Outbound-Caller-ID-Name">>, Clid#clid.caller_name}
-                    ,{<<"Callee-ID-Name">>, Clid#clid.callee_name}
-                    ,{<<"Callee-ID-Number">>, Clid#clid.callee_number}
                     ,{<<"Outbound-Callee-ID-Name">>, Clid#clid.callee_name}
                     ,{<<"Outbound-Callee-ID-Number">>, Clid#clid.callee_number}
                     ,{<<"Privacy-Hide-Name">>, Clid#clid.hide_name}
@@ -1246,8 +1242,6 @@ create_push_endpoint(Endpoint, Properties, Call) ->
         ,{<<"To-DID">>, get_to_did(Endpoint, Call)}
         ,{<<"SIP-Transport">>, get_sip_transport(SIPJObj)}
         ,{<<"Route">>, <<"sip:", ToUser/binary, ";fs_path='", Proxy/binary, "'">> }
-%%         ,{<<"Callee-ID-Name">>, Clid#clid.callee_name}
-%%         ,{<<"Callee-ID-Number">>, Clid#clid.callee_number}
         ,{<<"Outbound-Callee-ID-Name">>, Clid#clid.callee_name}
         ,{<<"Outbound-Callee-ID-Number">>, Clid#clid.callee_number}
         ,{<<"Outbound-Caller-ID-Number">>, Clid#clid.caller_number}
@@ -1373,8 +1367,6 @@ create_call_fwd_endpoint(Endpoint, Properties, Call) ->
       ,{<<"Endpoint-Timeout">>, get_timeout(Properties)}
       ,{<<"Endpoint-Delay">>, get_delay(Properties)}
       ,{<<"Presence-ID">>, kz_attributes:presence_id(Endpoint, Call)}
-      ,{<<"Callee-ID-Name">>, Clid#clid.callee_name}
-      ,{<<"Callee-ID-Number">>, Clid#clid.callee_number}
       ,{<<"Outbound-Callee-ID-Name">>, Clid#clid.callee_name}
       ,{<<"Outbound-Callee-ID-Number">>, Clid#clid.callee_number}
       ,{<<"Outbound-Caller-ID-Number">>, Clid#clid.caller_number}
