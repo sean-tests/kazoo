@@ -9,6 +9,7 @@
 
 -export([init/0]).
 -export([dialplan/1]).
+-export([route_winner/1]).
 
 -include("ecallmgr.hrl").
 
@@ -26,6 +27,7 @@
 -spec init() -> 'ok'.
 init() ->
     kazoo_bindings:bind(<<"fetch.dialplan.*.route_req.*">>, ?MODULE, 'dialplan'),
+    kazoo_bindings:bind(<<"event_stream.event.dialplan.ROUTE_WINNER">>, ?MODULE, 'route_winner'),
     'ok'.
 
 -spec dialplan(map()) -> fs_sendmsg_ret().
@@ -176,7 +178,9 @@ send_reply(#{node := Node, fetch_id := FetchId, reply := #{payload := Reply}}=Ct
 wait_for_route_winner(Ctx) ->
     receive
         {'kapi', {_, {'dialplan', 'ROUTE_WINNER'}, JObj}} ->
-            activate_call_control(Ctx#{winner => #{payload => JObj}})
+            activate_call_control(Ctx#{winner => #{payload => JObj}});
+        {'route_winner', JObj, Props} ->
+            activate_call_control(Ctx#{winner => #{payload => JObj, props => Props}})    
     after ?ROUTE_WINNER_TIMEOUT ->
             lager:warning("timeout after ~B receiving route winner", [?ROUTE_WINNER_TIMEOUT])
     end.
@@ -211,3 +215,14 @@ timeout_reply(Map) ->
 forbidden_reply(#{fetch_id := FetchId}=Map) ->
     lager:info("received forbidden route response for ~s, sending 403 Incoming call barred", [FetchId]),
     Map#{reply => #{payload => error_message(<<"403">>, <<"Incoming call barred">>), props => []}}.
+
+-spec route_winner(map()) -> any().
+route_winner(#{payload := JObj}=_Map) ->
+    NodeWinner = kzd_fetch:ccv(JObj, <<"Ecallmgr-Node">>),
+    case NodeWinner =:= kz_term:to_binary(node()) of
+        true ->
+            Pid = kz_term:to_pid(kz_api:reply_to(JObj)),
+            Pid ! {'route_winner', JObj, []};
+        false ->
+            lager:debug("route winner handled by other node : ~s", [NodeWinner])
+    end.

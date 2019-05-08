@@ -411,6 +411,7 @@ route_resp_fire_route_win(JObj, Props) ->
              ,{<<"Event-Name">>, <<"CUSTOM">>}
              ,{<<"Event-Category">>, <<"dialplan">>}
              ,{<<"Routing-Queue">>, kapi:encode_pid(props:get_value('control_q', Props), self())}
+             ,{<<"Request-From-PID">>, kz_term:to_binary(self())}
              ,{<<"Controller-Queue">>, kz_api:server_id(JObj)}
              ,{<<"Fetch-UUID">>, props:get_value('fetch_id', Props)}
              ],
