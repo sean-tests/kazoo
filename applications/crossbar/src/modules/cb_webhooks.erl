@@ -146,7 +146,9 @@ is_authorize(Context, _, [{<<"webhooks">>, _}]) ->
 is_authorize(_, _Verb, _Nouns) ->
     'false'.
 
--spec authenticate(cb_context:context()) -> boolean().
+-spec authenticate(cb_context:context()) ->
+                          {'true', cb_context:context()} |
+                          'false'.
 authenticate(Context) ->
     authenticate(Context, cb_context:req_verb(Context), cb_context:req_nouns(Context)).
 
