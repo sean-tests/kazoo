@@ -639,7 +639,6 @@ get_unset_vars(JObj) ->
             ,maybe_fix_ignore_early_media(Export)
             ,maybe_fix_group_confirm(Export)
             ,maybe_fix_fs_auto_answer_bug(Export)
-%            ,maybe_fix_caller_id(Export, JObj)
             ,"^"
             ]
     end.
@@ -665,14 +664,6 @@ maybe_fix_fs_auto_answer_bug(Export) ->
         'false' ->
             "^unset:sip_h_Call-Info^unset:sip_h_Alert-Info^unset:alert_info^unset:sip_invite_params^set:sip_auto_answer=false"
     end.
-
--spec maybe_fix_caller_id(kz_term:strings(), kz_json:object()) -> string().
-maybe_fix_caller_id(Export, JObj) ->
-    Fix = [
-           {lists:member("origination_callee_id_name", Export), kz_json:get_value(<<"Outbound-Callee-ID-Name">>, JObj), "effective_caller_id_name"}
-          ,{lists:member("origination_callee_id_number", Export), kz_json:get_value(<<"Outbound-Callee-ID-Number">>, JObj), "effective_caller_id_number"}
-          ],
-    string:join([ "^set:" ++ Key ++ "=" ++ erlang:binary_to_list(Value) || {IsTrue, Value, Key} <- Fix, IsTrue ], ":").
 
 -spec publish_error(kz_term:ne_binary(), created_uuid() | kz_term:api_binary(), kz_json:object(), kz_term:api_binary()) -> 'ok'.
 publish_error(_, _, _, 'undefined') -> 'ok';

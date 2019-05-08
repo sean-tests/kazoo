@@ -2817,7 +2817,6 @@ wait_for_bridge(Timeout, Fun, Call, Start, {'ok', JObj}) ->
             %% TODO: reduce log level if no issue is found with
             %%    basing the Result on Disposition
             lager:info("bridge channel execute completed with result ~s(~s) ~s", [Disposition, Result, BridgeHangupCause]),
-            lager:info_unsafe("bridge channel execute completed with result ~s/~s ~s(~s) : ~s", [CallFetchId, MsgFetchId, Disposition, Result, kz_json:encode(JObj, ['pretty'])]),
             {Result, JObj};
         {<<"call_event">>, <<"CHANNEL_EXECUTE_COMPLETE">>, <<"bridge">>}
           when CallFetchId =:= MsgFetchId

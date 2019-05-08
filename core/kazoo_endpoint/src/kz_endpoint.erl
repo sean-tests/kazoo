@@ -1112,15 +1112,7 @@ get_clid(Endpoint, Properties, Call, Type) ->
     case kz_json:is_true(<<"suppress_clid">>, Properties) of
         'true' -> maybe_move_privacy(Endpoint, Properties, Call, #clid{});
         'false' ->
-            {Number, Name} = kz_attributes:caller_id(Type, Call),
-            CallerNumber = case kapps_call:caller_id_number(Call) of
-                               Number -> 'undefined';
-                               _Number -> Number
-                           end,
-            CallerName = case kapps_call:caller_id_name(Call) of
-                             Name -> 'undefined';
-                             _Name -> Name
-                         end,
+            {CallerNumber, CallerName} = kz_attributes:caller_id(Type, Call),
             {CalleeNumber, CalleeName} = kz_attributes:callee_id(Endpoint, Call),
             maybe_move_privacy(Endpoint
                               ,Properties
@@ -1161,6 +1153,7 @@ move_privacy('true', 'true', 'true', Clid) ->
                                  kz_json:object().
 create_sip_endpoint(Endpoint, Properties, Call) ->
     Clid = get_clid(Endpoint, Properties, Call),
+    lager:info("CLID => ~p", [Clid]),
     create_sip_endpoint(Endpoint, Properties, Clid, Call).
 
 -spec create_sip_endpoint(kz_json:object(), kz_json:object(), clid(), kapps_call:call()) ->
@@ -1208,6 +1201,7 @@ create_sip_endpoint(Endpoint, Properties, #clid{}=Clid, Call) ->
                     ,{<<"Endpoint-Actions">>, endpoint_actions(Endpoint, Call)}
                      | maybe_get_t38(Endpoint, Call)
                     ]),
+    lager:info("ENDPOINT BUILD => ~s", [kz_json:encode(SIPEndpoint, ['pretty'])]),
     maybe_format_endpoint(SIPEndpoint, kz_json:get_json_value(<<"formatters">>, Endpoint)).
 
 -spec maybe_get_t38(kz_json:object(), kapps_call:call()) -> kz_term:proplist().
@@ -1252,8 +1246,8 @@ create_push_endpoint(Endpoint, Properties, Call) ->
         ,{<<"To-DID">>, get_to_did(Endpoint, Call)}
         ,{<<"SIP-Transport">>, get_sip_transport(SIPJObj)}
         ,{<<"Route">>, <<"sip:", ToUser/binary, ";fs_path='", Proxy/binary, "'">> }
-        ,{<<"Callee-ID-Name">>, Clid#clid.callee_name}
-        ,{<<"Callee-ID-Number">>, Clid#clid.callee_number}
+%%         ,{<<"Callee-ID-Name">>, Clid#clid.callee_name}
+%%         ,{<<"Callee-ID-Number">>, Clid#clid.callee_number}
         ,{<<"Outbound-Callee-ID-Name">>, Clid#clid.callee_name}
         ,{<<"Outbound-Callee-ID-Number">>, Clid#clid.callee_number}
         ,{<<"Outbound-Caller-ID-Number">>, Clid#clid.caller_number}
