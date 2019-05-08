@@ -2786,7 +2786,7 @@ wait_for_bridge(Timeout, Fun, Call, Start, {'ok', JObj}) ->
             _ = kz_util:put_callid(CallId),
             NewTimeout = kz_time:decr_timeout(Timeout, Start),
             NewStart = os:timestamp(),
-            lager:info("bridge channel replaced ~s for ~s", [EvtCallId, CallId]),            
+            lager:info("bridge channel replaced ~s for ~s", [EvtCallId, CallId]),
             wait_for_bridge(NewTimeout, Fun, kapps_call:set_call_id(CallId, Call), NewStart, receive_event(NewTimeout));
         {<<"call_event">>, <<"CHANNEL_DIRECT">>, _} ->
             CallId = kz_json:get_value(<<"Connecting-Leg-A-UUID">>, JObj),
