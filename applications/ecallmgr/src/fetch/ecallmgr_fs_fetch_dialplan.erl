@@ -181,7 +181,7 @@ wait_for_route_winner(Ctx) ->
         {'kapi', {_, {'dialplan', 'ROUTE_WINNER'}, JObj}} ->
             activate_call_control(Ctx#{winner => #{payload => JObj}});
         {'route_winner', JObj, Props} ->
-            activate_call_control(Ctx#{winner => #{payload => JObj, props => Props}})    
+            activate_call_control(Ctx#{winner => #{payload => JObj, props => Props}})
     after ?ROUTE_WINNER_TIMEOUT ->
             lager:warning("timeout after ~B receiving route winner", [?ROUTE_WINNER_TIMEOUT])
     end.
