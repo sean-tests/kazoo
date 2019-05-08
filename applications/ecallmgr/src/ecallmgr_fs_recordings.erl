@@ -12,7 +12,7 @@
 
 -spec init() -> 'ok'.
 init() ->
-    kazoo_bindings:bind(<<"event_stream.event.call_event.RECORD_STOP">>, ?MODULE, 'handle_record_stop'),
+    _ = kazoo_bindings:bind(<<"event_stream.event.call_event.RECORD_STOP">>, ?MODULE, 'handle_record_stop'),
     'ok'.
 
 -spec handle_record_stop(map()) -> any().

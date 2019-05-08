@@ -860,6 +860,7 @@
                                    ,<<"Caller-ID-Name">>
                                    ,<<"Caller-ID-Number">>
                                    ,<<"Custom-Channel-Vars">>
+                                   ,<<"Attended-Transfer-Keys">>
                                    ]).
 -define(TRANSFER_VALUES, [{<<"Event-Category">>, <<"call">>}
                          ,{<<"Event-Name">>, <<"command">>}
@@ -922,6 +923,19 @@
                           ,{<<"Sending-Leg">>, fun is_boolean/1}
                           ]).
 
+%% Event-Actions
+-define(EVENT_ACTIONS_HEADERS, [<<"Application-Name">>
+                               ,<<"Call-ID">>
+                               ,<<"Event-Actions">>
+                               ]).
+-define(OPTIONAL_EVENT_ACTIONS_HEADERS, [<<"Insert-At">>]).
+-define(EVENT_ACTIONS_VALUES, [{<<"Event-Category">>, <<"call">>}
+                              ,{<<"Event-Name">>, <<"command">>}
+                              ,{<<"Application-Name">>, <<"event_actions">>}
+                              ,{<<"Insert-At">>, <<"now">>}
+                              ]).
+-define(EVENT_ACTIONS_TYPES, [{<<"Event-Actions">>, fun kz_json:is_json_object/1}
+                             ]).
 
 -define(KAPI_DIALPLAN_HRL, 'true').
 -endif.

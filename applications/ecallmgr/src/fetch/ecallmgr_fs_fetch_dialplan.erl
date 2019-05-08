@@ -26,8 +26,8 @@
 %%------------------------------------------------------------------------------
 -spec init() -> 'ok'.
 init() ->
-    kazoo_bindings:bind(<<"fetch.dialplan.*.route_req.*">>, ?MODULE, 'dialplan'),
-    kazoo_bindings:bind(<<"event_stream.event.dialplan.ROUTE_WINNER">>, ?MODULE, 'route_winner'),
+    _ = kazoo_bindings:bind(<<"fetch.dialplan.*.route_req.*">>, ?MODULE, 'dialplan'),
+    _ = kazoo_bindings:bind(<<"event_stream.event.dialplan.ROUTE_WINNER">>, ?MODULE, 'route_winner'),
     'ok'.
 
 -spec dialplan(map()) -> fs_sendmsg_ret().

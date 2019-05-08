@@ -40,7 +40,7 @@
 %%------------------------------------------------------------------------------
 -spec init() -> 'ok'.
 init() ->
-    kazoo_bindings:bind(<<"event_stream.publish.conference.event">>, ?MODULE, 'publish_event'),
+    _ = kazoo_bindings:bind(<<"event_stream.publish.conference.event">>, ?MODULE, 'publish_event'),
     'ok'.
 
 -spec publish_event(map()) -> 'ok'.

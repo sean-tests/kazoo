@@ -31,7 +31,7 @@
 %%------------------------------------------------------------------------------
 -spec init() -> 'ok'.
 init() ->
-    kazoo_bindings:bind(<<"fetch.languages.*.language_req">>, ?MODULE, 'language_req'),
+    _ = kazoo_bindings:bind(<<"fetch.languages.*.language_req">>, ?MODULE, 'language_req'),
     'ok'.
 
 -spec language_req(map()) -> fs_sendmsg_ret().

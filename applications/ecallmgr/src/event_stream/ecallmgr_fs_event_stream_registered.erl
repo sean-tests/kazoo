@@ -28,8 +28,8 @@
 %%------------------------------------------------------------------------------
 -spec init() -> 'ok'.
 init() ->
-    kazoo_bindings:bind(<<"event_stream.registered.call_event.*">>, ?MODULE, 'notify_call_event'),
-    kazoo_bindings:bind(<<"event_stream.registered.conference.event">>, ?MODULE, 'notify_conference_event'),
+    _ = kazoo_bindings:bind(<<"event_stream.registered.call_event.*">>, ?MODULE, 'notify_call_event'),
+    _ = kazoo_bindings:bind(<<"event_stream.registered.conference.event">>, ?MODULE, 'notify_conference_event'),
     'ok'.
 
 -spec notify_call_event(map()) -> any().

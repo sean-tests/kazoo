@@ -24,8 +24,8 @@
 %%------------------------------------------------------------------------------
 -spec init() -> 'ok'.
 init() ->
-    kazoo_bindings:bind(<<"fetch.channels.*.channel_req">>, ?MODULE, 'channel_req'),
-    kazoo_bindings:bind(<<"fetch.channels.*.query">>, ?MODULE, 'channel_req'),
+    _ = kazoo_bindings:bind(<<"fetch.channels.*.channel_req">>, ?MODULE, 'channel_req'),
+    _ = kazoo_bindings:bind(<<"fetch.channels.*.query">>, ?MODULE, 'channel_req'),
     'ok'.
 
 

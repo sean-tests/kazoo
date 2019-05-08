@@ -40,7 +40,7 @@
 %%------------------------------------------------------------------------------
 -spec init() -> 'ok'.
 init() ->
-    kazoo_bindings:bind(<<"event_stream.process.conference.event">>, ?MODULE, 'handle_event'),
+    _ = kazoo_bindings:bind(<<"event_stream.process.conference.event">>, ?MODULE, 'handle_event'),
     'ok'.
 
 %%%=============================================================================

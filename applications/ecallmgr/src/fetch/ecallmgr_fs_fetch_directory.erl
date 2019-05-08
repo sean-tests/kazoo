@@ -24,7 +24,7 @@
 %%------------------------------------------------------------------------------
 -spec init() -> 'ok'.
 init() ->
-    kazoo_bindings:bind(<<"fetch.directory.*.*.*">>, ?MODULE, 'directory_lookup'),
+    _ = kazoo_bindings:bind(<<"fetch.directory.*.*.*">>, ?MODULE, 'directory_lookup'),
     'ok'.
 
 %%%=============================================================================

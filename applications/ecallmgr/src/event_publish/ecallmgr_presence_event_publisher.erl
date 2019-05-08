@@ -20,7 +20,7 @@
 %%------------------------------------------------------------------------------
 -spec init() -> 'ok'.
 init() ->
-    kazoo_bindings:bind(<<"event_stream.publish.call_event.PRESENCE_IN">>, ?MODULE, 'publish_presence'),
+    _ = kazoo_bindings:bind(<<"event_stream.publish.call_event.PRESENCE_IN">>, ?MODULE, 'publish_presence'),
     'ok'.
 
 -spec publish_presence(map()) -> any().

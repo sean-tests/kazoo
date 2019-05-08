@@ -33,16 +33,16 @@
 %%------------------------------------------------------------------------------
 -spec init() -> 'ok'.
 init() ->
-    kazoo_bindings:bind(<<"event_stream.process.call_event.CHANNEL_CREATE">>, ?MODULE, 'channel_create'),
-    kazoo_bindings:bind(<<"event_stream.process.call_event.CHANNEL_DESTROY">>, ?MODULE, 'channel_destroy'),
-    kazoo_bindings:bind(<<"event_stream.process.call_event.CHANNEL_ANSWER">>, ?MODULE, 'channel_answer'),
-    kazoo_bindings:bind(<<"event_stream.process.call_event.CHANNEL_BRIDGE">>, ?MODULE, 'channel_bridge'),
-    kazoo_bindings:bind(<<"event_stream.process.call_event.CHANNEL_UNBRIDGE">>, ?MODULE, 'channel_unbridge'),
-    kazoo_bindings:bind(<<"event_stream.process.call_event.CHANNEL_HOLD">>, ?MODULE, 'channel_hold'),
-    kazoo_bindings:bind(<<"event_stream.process.call_event.CHANNEL_UNHOLD">>, ?MODULE, 'channel_unhold'),
-    kazoo_bindings:bind(<<"event_stream.process.call_event.CHANNEL_DATA">>, ?MODULE, 'channel_data'),
-    kazoo_bindings:bind(<<"event_stream.process.call_event.CALL_UPDATE">>, ?MODULE, 'channel_update'),
-    kazoo_bindings:bind(<<"event_stream.process.call_event.CHANNEL_SYNC">>, ?MODULE, 'channel_sync'),
+    _ = kazoo_bindings:bind(<<"event_stream.process.call_event.CHANNEL_CREATE">>, ?MODULE, 'channel_create'),
+    _ = kazoo_bindings:bind(<<"event_stream.process.call_event.CHANNEL_DESTROY">>, ?MODULE, 'channel_destroy'),
+    _ = kazoo_bindings:bind(<<"event_stream.process.call_event.CHANNEL_ANSWER">>, ?MODULE, 'channel_answer'),
+    _ = kazoo_bindings:bind(<<"event_stream.process.call_event.CHANNEL_BRIDGE">>, ?MODULE, 'channel_bridge'),
+    _ = kazoo_bindings:bind(<<"event_stream.process.call_event.CHANNEL_UNBRIDGE">>, ?MODULE, 'channel_unbridge'),
+    _ = kazoo_bindings:bind(<<"event_stream.process.call_event.CHANNEL_HOLD">>, ?MODULE, 'channel_hold'),
+    _ = kazoo_bindings:bind(<<"event_stream.process.call_event.CHANNEL_UNHOLD">>, ?MODULE, 'channel_unhold'),
+    _ = kazoo_bindings:bind(<<"event_stream.process.call_event.CHANNEL_DATA">>, ?MODULE, 'channel_data'),
+    _ = kazoo_bindings:bind(<<"event_stream.process.call_event.CALL_UPDATE">>, ?MODULE, 'channel_update'),
+    _ = kazoo_bindings:bind(<<"event_stream.process.call_event.CHANNEL_SYNC">>, ?MODULE, 'channel_sync'),
     'ok'.
 
 -spec channel_create(map()) -> any().
