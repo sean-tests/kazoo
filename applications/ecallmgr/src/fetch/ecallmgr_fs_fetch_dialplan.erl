@@ -168,7 +168,7 @@ send_reply(#{node := Node, fetch_id := FetchId, reply := #{payload := Reply}}=Ct
     Props = maps:to_list(Ctx),
     {'ok', XML} = ecallmgr_fs_xml:route_resp_xml('dialplan', Reply, Props),
     lager:debug("sending xml dialplan reply for request ~s tp ~s",[FetchId, Node]),
-    freeswitch:fetch_reply(Ctx#{reply => iolist_to_binary(XML)}),
+    _ = freeswitch:fetch_reply(Ctx#{reply => iolist_to_binary(XML)}),
     case kz_api:defer_response(Reply)
         orelse kz_json:get_ne_binary_value(<<"Method">>, Reply) /= <<"park">>
     of

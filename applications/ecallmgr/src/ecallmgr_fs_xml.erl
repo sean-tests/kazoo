@@ -1013,8 +1013,8 @@ users_el(Children) ->
 -spec user_ptr_el(kz_types:xml_attrib_value()) -> kz_types:xml_el().
 user_ptr_el(Id) ->
     #xmlElement{name='user'
-               ,attributes=[xml_attrib(<<"id">>, Id)
-                           ,xml_attrib(<<"type">>, <<"pointer">>)
+               ,attributes=[xml_attrib('id', Id)
+                           ,xml_attrib('type', <<"pointer">>)
                            ]
                }.
 

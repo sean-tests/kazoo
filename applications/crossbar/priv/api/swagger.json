@@ -13035,6 +13035,47 @@
             ],
             "type": "object"
         },
+        "kapi.dialplan.event_actions": {
+            "description": "AMQP API for dialplan.event_actions",
+            "properties": {
+                "Application-Name": {
+                    "enum": [
+                        "event_actions"
+                    ],
+                    "type": "string"
+                },
+                "Call-ID": {
+                    "type": "string"
+                },
+                "Event-Actions": {
+                    "type": "object"
+                },
+                "Event-Category": {
+                    "enum": [
+                        "call"
+                    ],
+                    "type": "string"
+                },
+                "Event-Name": {
+                    "enum": [
+                        "command"
+                    ],
+                    "type": "string"
+                },
+                "Insert-At": {
+                    "enum": [
+                        "now"
+                    ],
+                    "type": "string"
+                }
+            },
+            "required": [
+                "Application-Name",
+                "Call-ID",
+                "Event-Actions"
+            ],
+            "type": "object"
+        },
         "kapi.dialplan.execute_extension": {
             "description": "AMQP API for dialplan.execute_extension",
             "properties": {
@@ -15282,6 +15323,9 @@
                     "enum": [
                         "transfer"
                     ],
+                    "type": "string"
+                },
+                "Attended-Transfer-Keys": {
                     "type": "string"
                 },
                 "Call-ID": {

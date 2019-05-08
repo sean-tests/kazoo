@@ -27,7 +27,7 @@
 %%------------------------------------------------------------------------------
 -spec init() -> 'ok'.
 init() ->
-    kazoo_bindings:bind(<<"fetch.configuration.*.*.sofia.conf">>, ?MODULE, 'sofia'),
+    _ = kazoo_bindings:bind(<<"fetch.configuration.*.*.sofia.conf">>, ?MODULE, 'sofia'),
     'ok'.
 
 -spec sofia(map()) -> fs_sendmsg_ret().

@@ -175,7 +175,7 @@ endpoint_id(JObj) ->
            ],
     kz_json:get_first_defined(Keys, JObj).
 
--spec exec_endpoint(pid(), atom(), kz_term:ne_binary(), kapi_conference:doc(), kz_json:object()) -> 'ok'.
+-spec exec_endpoint(pid(), atom(), kz_term:ne_binary(), kapi_conference:doc(), kz_json:object()) -> any().
 exec_endpoint(Parent, ConferenceNode, ConferenceId, JObj, EP) ->
     EndpointCallId = kz_json:find(<<"Outbound-Call-ID">>, [EP, JObj], kz_binary:rand_hex(16)),
     Endpoint = update_endpoint(EP, EndpointCallId),
