@@ -95,7 +95,6 @@
                ,initial_ccvs :: kz_json:object()
                ,node_down_tref :: kz_term:api_reference()
                ,current_cmd_uuid :: kz_term:api_binary()
-                                                %               ,channel :: kz_term:api_pid()
                ,options :: kz_term:proplist()
                ,event_uuids = [] :: kz_term:ne_binaries()
                ,control_ctx = #{} :: map()
@@ -1167,7 +1166,7 @@ handle_transferee(JObj, #state{fetch_id=FetchId
             lager:info("we (~s) have been transferred, terminate immediately", [CallId]),
             {'stop', 'normal', State};
         _Else ->
-            lager:info("we were a different instance of this transferred call"),
+            lager:info("we were a different instance of this transferred call ~s : ~s", [FetchId, _Else]),
             {'noreply', State}
     end.
 
