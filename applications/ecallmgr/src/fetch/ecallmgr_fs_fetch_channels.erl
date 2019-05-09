@@ -115,7 +115,7 @@ try_channel_resp(#{node := Node} = Ctx, Props) ->
             lager:debug("sending sofia XML to ~s: ~s", [Node, ConfigXml]),
             freeswitch:fetch_reply(Ctx#{reply => erlang:iolist_to_binary(ConfigXml)})
     catch
-        _E:_R ->
+        _E:_R:_ ->
             lager:info("sofia profile resp failed to convert to XML (~s): ~p", [_E, _R]),
             channel_not_found(Ctx)
     end.

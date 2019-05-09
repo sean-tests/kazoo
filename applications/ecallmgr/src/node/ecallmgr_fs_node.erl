@@ -561,7 +561,7 @@ info(Srv) ->
             try
                 gen_server:call(Pid, 'info')
             catch
-                _:_ -> 'undefined'
+                _:_:_ -> 'undefined'
             end;
         _ -> 'undefined'
     end.

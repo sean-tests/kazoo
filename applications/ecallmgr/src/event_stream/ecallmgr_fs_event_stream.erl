@@ -291,8 +291,8 @@ handle_data(Node, Data, Channel) ->
             kz_util:spawn(fun handle_event/3, [Node, JObj, Channel]);
         Else -> {'error', {'not_handled', Else}}
     catch
-        'error':'badarg' -> {'error', 'decode_error'};
-        _:_E -> {'error', _E}
+        'error':'badarg':_ -> {'error', 'decode_error'};
+        _:_E:_ -> {'error', _E}
     end.
 
 -spec handle_event(atom(), kz_json:object(), pid()) -> any().

@@ -142,7 +142,7 @@ exists(UUID) -> ets:member(?CHANNELS_TBL, UUID).
 import_moh(UUID) ->
     try ets:lookup_element(?CHANNELS_TBL, UUID, #channel.import_moh)
     catch
-        'error':'badarg' -> 'false'
+        'error':'badarg':_ -> 'false'
     end.
 
 -spec set_account_id(kz_term:ne_binary(), string() | kz_term:ne_binary()) -> 'ok'.

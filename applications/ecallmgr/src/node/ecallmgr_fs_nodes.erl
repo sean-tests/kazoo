@@ -406,7 +406,7 @@ handle_call({'add_fs_node', NodeName, Cookie, Options}, From, State) ->
                       Reply ->
                           gen_server:reply(From, Reply)
                   catch
-                      _E:R ->
+                      _E:R:_ ->
                           lager:debug("failed to add fs node ~s(~s): ~s: ~p", [NodeName, Cookie, _E, R]),
                           gen_server:reply(From, R)
                   end
@@ -679,8 +679,7 @@ maybe_start_node_handlers(#node{node=NodeName
             lager:warning("unexpected result trying to start ~s node handlers: ~-255p", [NodeName, _Else]),
             {'error', 'failed_starting_handlers'}
     catch
-        _:Reason ->
-            ST = erlang:get_stacktrace(),
+        _:Reason:ST ->
             lager:warning("exception starting node ~s handlers: ~p", [NodeName, Reason]),
             kz_util:log_stacktrace(ST),
             {'error', Reason}
@@ -749,7 +748,7 @@ get_fs_client_version(NodeName) ->
             lager:debug("unable to get freeswitch client version: ~p", [_Else]),
             'undefined'
     catch
-        _E:_R ->
+        _E:_R:_ ->
             lager:debug("unable to contact freeswitch ~s: ~p", [NodeName, _R]),
             'undefined'
     end.
@@ -827,7 +826,7 @@ start_node_from_config(MaybeJObj) ->
             try add(kz_term:to_atom(Node, 'true'), kz_term:to_atom(Cookie, 'true')) of
                 _OK -> lager:debug("added ~s(~s) successfully: ~p", [Node, Cookie, _OK]), 'ok'
             catch
-                _E:_R -> lager:debug("failed to add ~s(~s): ~s: ~p", [Node, Cookie, _E, _R]), 'error'
+                _E:_R:_ -> lager:debug("failed to add ~s(~s): ~s: ~p", [Node, Cookie, _E, _R]), 'error'
             end
     end.
 

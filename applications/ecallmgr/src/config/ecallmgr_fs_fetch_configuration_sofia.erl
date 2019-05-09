@@ -153,7 +153,7 @@ maybe_kill_node_gateways(JObj, Node) ->
             RunningNames = kz_json:get_keys(Gateways),
             _ = maybe_kill_removed_gateways(RunningNames, JObj, Node)
     catch
-        _:_ -> 'ok'
+        _:_:_ -> 'ok'
     end.
 
 maybe_kill_removed_gateways([], _, _) -> 'ok';

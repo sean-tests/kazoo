@@ -63,8 +63,8 @@ version(Node, Timeout) ->
         'timeout' -> {'error', 'timeout'};
         Result -> Result
     catch
-        exit:{{nodedown, _Node}, _} -> {error, nodedown};
-        _E:_R ->
+        exit:{{nodedown, _Node}, _}:_ -> {error, nodedown};
+        _E:_R:_ ->
             lager:info("failed to get mod_kazoo version from ~s: ~p ~p"
                       ,[Node, _E, _R]),
             {'error', 'exception'}
@@ -75,7 +75,7 @@ noevents(Node) ->
     try gen_server:cast({'mod_kazoo', Node}, 'noevents') of
         'ok' -> 'ok'
     catch
-        _E:_R ->
+        _E:_R:_ ->
             lager:info("failed to send noevents to ~s: ~p ~p"
                       ,[Node, _E, _R]),
             {'error', 'exception'}
@@ -95,7 +95,7 @@ getpid(Node, Timeout) ->
         'timeout' -> {'error', 'timeout'};
         Result -> Result
     catch
-        _E:_R ->
+        _E:_R:_ ->
             lager:info("failed to get mod_kazoo pid from ~s: ~p ~p"
                       ,[Node, _E, _R]),
             {'error', 'exception'}
@@ -112,7 +112,7 @@ bind(Node, Type, Timeout) ->
         {'ok', <<"-ERR ", Reason/binary>>} -> internal_fs_error(Reason);
         Result -> Result
     catch
-        _E:_R ->
+        _E:_R:_ ->
             lager:info("failed to get bind to ~p on ~s: ~p ~p", [Type, Node, _E, _R]),
             {'error', 'exception'}
     end.
@@ -127,7 +127,7 @@ fetch_reply(#{node := Node, section := Section, fetch_id := FetchID, reply := Re
         {'ok', <<"+OK", _/binary>>} -> 'ok';
         Result -> Result
     catch
-        _E:_R ->
+        _E:_R:_ ->
             lager:info("failed to send fetch reply to ~s: ~p ~p", [Node, _E, _R]),
             {'error', 'exception'}
     end;
@@ -174,7 +174,7 @@ api(Node, Cmd, Args, Timeout) when is_atom(Node) ->
         {'error', _} = Err -> Err;
         Result -> api_result('ok', Result)
     catch
-        _E:_R ->
+        _E:_R:_ ->
             lager:info("failed to execute api command ~s on ~s: ~p ~p", [Cmd, Node, _E, _R]),
             {'error', 'exception'}
     end.
@@ -211,7 +211,7 @@ json_api(Node, UUID, Cmd, Args, Timeout) when is_atom(Node) ->
         {'ok', Result} -> json_api_result('ok', Result);
         {'error', Result} -> json_api_result('error', Result)
     catch
-        _E:_R ->
+        _E:_R:_ ->
             lager:info("failed to execute api command ~s on ~s: ~p ~p", [Cmd, Node, _E, _R]),
             {'error', 'exception'}
     end.
@@ -255,7 +255,7 @@ bgapi(Node, Cmd, Args) ->
                       'timeout' ->
                           Self ! {'api', {'error', 'timeout'}}
                   catch
-                      _E:_R ->
+                      _E:_R:_ ->
                           lager:info("failed to execute bgapi command ~s on ~s: ~p ~p"
                                     ,[Cmd, Node, _E, _R]),
                           Self ! {'api', {'error', 'exception'}}
@@ -288,7 +288,7 @@ bgapi(Node, Cmd, Args, Fun) when is_function(Fun, 2) ->
                       'timeout' ->
                           Self ! {'api', {'error', 'timeout'}}
                   catch
-                      _E:_R ->
+                      _E:_R:_ ->
                           lager:info("failed to execute bgapi command ~s on ~s: ~p ~p"
                                     ,[Cmd, Node, _E, _R]),
                           Self ! {'api', {'error', 'exception'}}
@@ -321,7 +321,7 @@ bgapi(Node, Cmd, Args, Fun, CallBackParams) when is_function(Fun, 3) ->
                       'timeout' ->
                           Self ! {'api', {'error', 'timeout'}}
                   catch
-                      _E:_R ->
+                      _E:_R:_ ->
                           lager:info("failed to execute bgapi command ~s on ~s: ~p ~p"
                                     ,[Cmd, Node, _E, _R]),
                           Self ! {'api', {'error', 'exception'}}
@@ -354,7 +354,7 @@ bgapi(Node, UUID, CallBackParams, Cmd, Args, Fun) when is_function(Fun, 6) ->
                       'timeout' ->
                           Self ! {'api', {'error', 'timeout'}}
                   catch
-                      _E:_R ->
+                      _E:_R:_ ->
                           lager:info("failed to execute bgapi command ~s on ~s: ~p ~p"
                                     ,[Cmd, Node, _E, _R]),
                           Self ! {'api', {'error', 'exception'}}
@@ -388,7 +388,7 @@ event(Node, [_|_]=Events, Timeout) ->
         Else ->
             Else
     catch
-        _E:_R ->
+        _E:_R:_ ->
             lager:info("failed to bind to events on ~s: ~p ~p"
                       ,[Node, _E, _R]),
             {'error', 'exception'}
@@ -447,7 +447,7 @@ bgapi4(Node, Cmd, Args, Fun, CallBackParams, Self) ->
         'timeout' ->
             Self ! {'api', {'error', 'timeout'}}
     catch
-        _E:_R ->
+        _E:_R:_ ->
             lager:info("failed to execute bgapi command ~s on ~s: ~p ~p"
                       ,[Cmd, Node, _E, _R]),
             Self ! {'api', {'error', 'exception'}}
@@ -502,8 +502,8 @@ no_legacy(Node) ->
         'timeout' -> {'error', 'timeout'};
         Result -> Result
     catch
-        exit:{{nodedown, _Node}, _} -> {error, nodedown};
-        _E:_R ->
+        exit:{{nodedown, _Node}, _}:_ -> {error, nodedown};
+        _E:_R:_ ->
             lager:info("failed to set mod_kazoo no_legacy on ~s: ~p ~p"
                       ,[Node, _E, _R]),
             {'error', 'exception'}

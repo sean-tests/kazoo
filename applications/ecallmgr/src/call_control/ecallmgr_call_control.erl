@@ -212,10 +212,10 @@ init_control(Pid, #{node := Node
             call_control_ready(State),
             gen_server:enter_loop(?MODULE, [], State);
         _Other ->
-    catch(ExitFun(Payload)),
+            catch(ExitFun(Payload)),
             lager:debug("callback doesn't want to proceed")
     catch
-        _Ex:_Err ->
+        _Ex:_Err:_Stacktrace ->
             catch(ExitFun(Payload)),
             lager:debug("error running callback ~p : ~p", [_Ex, _Err])
 
@@ -969,7 +969,7 @@ execute_control_request(Cmd, #state{node=Node
 
     try Mod:exec_cmd(Node, CallLeg, Cmd, self())
     catch
-        'throw':{'error', 'baduuid'} ->
+        'throw':{'error', 'baduuid'}:_ ->
             lager:debug("unable to execute command, baduuid"),
             Msg = list_to_binary(["Session ", CallId
                                  ," not found for ", Application
@@ -977,7 +977,7 @@ execute_control_request(Cmd, #state{node=Node
             send_error_resp(CallId, Cmd, Msg),
             Srv ! {'force_queue_advance', CallId},
             'ok';
-        _:{'error', 'nosession'} ->
+        _:{'error', 'nosession'}:_ ->
             lager:debug("unable to execute command, no session"),
             Msg = list_to_binary(["Session ", CallId
                                  ," not found for ", Application
@@ -985,7 +985,7 @@ execute_control_request(Cmd, #state{node=Node
             send_error_resp(CallId, Cmd, Msg),
             Srv ! {'force_queue_advance', CallId},
             'ok';
-        'error':{'badmatch', {'error', 'nosession'}} ->
+        'error':{'badmatch', {'error', 'nosession'}}:_ ->
             lager:debug("unable to execute command, no session"),
             Msg = list_to_binary(["Session ", CallId
                                  ," not found for ", Application
@@ -993,8 +993,7 @@ execute_control_request(Cmd, #state{node=Node
             send_error_resp(CallId, Cmd, Msg),
             Srv ! {'force_queue_advance', CallId},
             'ok';
-        'error':{'badmatch', {'error', ErrMsg}} ->
-            ST = erlang:get_stacktrace(),
+        'error':{'badmatch', {'error', ErrMsg}}:ST ->
             lager:debug("invalid command ~s: ~p", [Application, ErrMsg]),
             kz_util:log_stacktrace(ST),
             maybe_send_error_resp(CallId, Cmd),
@@ -1012,8 +1011,7 @@ execute_control_request(Cmd, #state{node=Node
             send_error_resp(CallId, Cmd, Msg),
             Srv ! {'force_queue_advance', CallId},
             'ok';
-        _A:_B ->
-            ST = erlang:get_stacktrace(),
+        _A:_B:ST ->
             lager:debug("exception (~s) while executing ~s: ~p", [_A, Application, _B]),
             kz_util:log_stacktrace(ST),
             send_error_resp(CallId, Cmd),
