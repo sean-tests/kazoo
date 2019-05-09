@@ -1197,7 +1197,6 @@ create_sip_endpoint(Endpoint, Properties, #clid{}=Clid, Call) ->
                     ,{<<"Endpoint-Actions">>, endpoint_actions(Endpoint, Call)}
                      | maybe_get_t38(Endpoint, Call)
                     ]),
-    lager:info("ENDPOINT BUILD => ~s", [kz_json:encode(SIPEndpoint, ['pretty'])]),
     maybe_format_endpoint(SIPEndpoint, kz_json:get_json_value(<<"formatters">>, Endpoint)).
 
 -spec maybe_get_t38(kz_json:object(), kapps_call:call()) -> kz_term:proplist().
