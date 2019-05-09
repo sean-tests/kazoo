@@ -2450,7 +2450,7 @@ do_collect_digits(#wcc_collect_digits{max_digits=MaxDigits
                         andalso flush(Call),
 
                     case lists:member(Digit, Terminators) of
-                        'true' ->d
+                        'true' ->
                             lager:debug("collected digits ('~s') from caller, terminated with ~s", [Digits, Digit]),
                             {'ok', Digits};
                         'false' ->
