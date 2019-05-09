@@ -181,7 +181,7 @@ send_cmds(Node, UUID, App, Cmds) ->
                     ,{<<"event-uuid-name">>, kz_term:to_binary(App)}
                      | EventArgs
                     ]
-                end || Cmd <- Cmds],
+                end || Cmd <- Cmds, Cmd =/= 'undefined'],
     Result = freeswitch:cmds(Node, UUID, Commands),
     lager:debug("execute on node ~s(~s) : ~p"
                ,[Node, UUID, Result]

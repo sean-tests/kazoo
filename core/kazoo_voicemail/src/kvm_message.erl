@@ -691,8 +691,11 @@ fake_vmbox_jobj(Call, Props) ->
 -spec store_recording(kz_term:ne_binary(), kz_term:ne_binary() | store_media_url(), kapps_call:call(), kz_term:ne_binary()) ->
                              'ok' |
                              {'error', kapps_call:call()}.
+store_recording(AttachmentName, UrlFun, Call, MessageId)
+  when ->
 store_recording(AttachmentName, Url, Call, MessageId) ->
     case kapps_call_command:store_file(<<"/tmp/", AttachmentName/binary>>, Url, Call) of
+        'ok' when is_fun(Url, 0) -> 'ok';
         'ok' -> lager:debug("stored ~s to ~s", [AttachmentName, Url]);
         {'error', _R} ->
             lager:warning("error during storing voicemail recording ~s , checking attachment existence: ~p", [MessageId, _R]),
