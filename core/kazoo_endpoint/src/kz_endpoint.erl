@@ -1153,7 +1153,6 @@ move_privacy('true', 'true', 'true', Clid) ->
                                  kz_json:object().
 create_sip_endpoint(Endpoint, Properties, Call) ->
     Clid = get_clid(Endpoint, Properties, Call),
-    lager:info("CLID => ~p", [Clid]),
     create_sip_endpoint(Endpoint, Properties, Clid, Call).
 
 -spec create_sip_endpoint(kz_json:object(), kz_json:object(), clid(), kapps_call:call()) ->
