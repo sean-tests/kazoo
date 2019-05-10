@@ -399,8 +399,8 @@ authz_req(Data) ->
        }
       ,{<<"From-Network-Addr">>, kzd_freeswitch:from_network_ip(Data)}
       ,{<<"From-Network-Port">>, kzd_freeswitch:from_network_port(Data)}
-      ,{<<"Custom-Channel-Vars">>, kz_json:from_list(kzd_freeswitch:ccvs(Data))}
-      ,{<<"Custom-Application-Vars">>, kz_json:from_list(ecallmgr_util:custom_application_vars(Data))}
+      ,{<<"Custom-Channel-Vars">>, kzd_freeswitch:ccvs(Data)}
+      ,{<<"Custom-Application-Vars">>, kzd_freeswitch:cavs(Data)}
        | kz_api:default_headers(?APP_NAME, ?APP_VERSION)
       ]).
 
