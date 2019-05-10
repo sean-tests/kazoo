@@ -84,6 +84,7 @@
         ,<<"Privacy-Method">>
         ,<<"Privacy-Hide-Name">>
         ,<<"Privacy-Hide-Number">>
+        ,<<"Continue-After">>
         ]).
 -define(BRIDGE_REQ_VALUES, [{<<"Event-Category">>, <<"call">>}
                            ,{<<"Event-Name">>, <<"command">>}
@@ -95,7 +96,8 @@
                            ,?INSERT_AT_TUPLE
                            ]).
 -define(BRIDGE_REQ_TYPES, [{<<"B-Leg-Events">>, fun b_leg_events_v/1}
-                          ,{<<"Continue-On-Fail">>, fun kz_term:is_boolean/1}
+                          ,{<<"Continue-On-Fail">>, fun continue_on_fail_v/1}
+                          ,{<<"Continue-After">>, fun kz_term:is_boolean/1}
                           ,{<<"Custom-Application-Vars">>, fun kz_json:is_json_object/1}
                           ,{<<"Custom-Channel-Vars">>, fun kz_json:is_json_object/1}
                           ,{<<"Custom-SIP-Headers">>, fun kz_json:is_json_object/1}

@@ -29,7 +29,7 @@ call_command(Node, UUID, JObj) ->
             %% this does not test how many are ACTUALLY dialed (registered)
             %% since that is one of the things we want to be ringing during
 
-            lager:debug("executing bridge on channel ~p", [UUID]),
+            lager:debug("executing bridge on channel ~s", [UUID]),
 
             Channel = case ecallmgr_fs_channel:fetch(UUID, 'record') of
                           {'ok', Chan} -> Chan;
@@ -50,6 +50,7 @@ call_command(Node, UUID, JObj) ->
                        ,fun pre_exec/5
                        ,fun handle_loopback/5
                        ,fun create_command/5
+                       ,fun post_exec/5
                        ],
             lager:debug("creating bridge dialplan"),
             XferExt = lists:foldr(fun(F, DP) ->
@@ -239,11 +240,37 @@ handle_loopback(DP, _Node, _UUID, _Channel, JObj) ->
     Keys = [<<"Simplify-Loopback">>, <<"Loopback-Bowout">>],
     handle_loopback_keys(Keys, JObj, DP).
 
+-spec continue_on_fail(kz_json:object()) -> kz_term:ne_binary().
+continue_on_fail(JObj) ->
+    case kz_json:get_value(<<"Continue-On-Fail">>, JObj) of
+        'undefined' -> <<"true">>;
+        Val when is_binary(Val) -> Val;
+        Val when is_boolean(Val) -> kz_term:to_binary(Val);
+        Val when is_list(Val) -> kz_binary:join(Val, <<",">>);
+        _ -> <<"true">>
+    end.
+
+-spec hangup_after_bridge(kz_json:object()) -> kz_term:ne_binary().
+hangup_after_bridge(JObj) ->
+    case kz_json:get_boolean_value(<<"Continue-After">>, JObj) of
+        'true' -> <<"false">>;
+        'false' -> <<"true">>;
+        'undefined' -> <<"true">>
+    end.
+
 -spec pre_exec(kz_term:proplist(), atom(), kz_term:ne_binary(), channel(), kz_json:object()) -> kz_term:proplist().
-pre_exec(DP, _Node, _UUID, _Channel, _JObj) ->
-    [{"application", "set continue_on_fail=true"}
-    ,{"application", "export sip_redirect_context=context_2"}
-    ,{"application", "set hangup_after_bridge=true"}
+pre_exec(DP, _Node, _UUID, _Channel, JObj) ->
+    [{"application", "export sip_redirect_context=context_2"}
+    ,{"application", list_to_binary(["set continue_on_fail=", continue_on_fail(JObj)])}
+    ,{"application", list_to_binary(["set hangup_after_bridge=", hangup_after_bridge(JObj)])}
+     |DP
+    ].
+
+-spec post_exec(kz_term:proplist(), atom(), kz_term:ne_binary(), channel(), kz_json:object()) -> kz_term:proplist().
+post_exec(DP, _Node, _UUID, _Channel, _JObj) ->
+    Event = ecallmgr_util:create_masquerade_event(<<"bridge">>, <<"CHANNEL_EXECUTE_COMPLETE">>),
+    [{"application", Event}
+    ,{"application", "park"}
      |DP
     ].
 

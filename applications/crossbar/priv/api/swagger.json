@@ -12288,6 +12288,9 @@
                 "Confirm-Key": {
                     "type": "string"
                 },
+                "Continue-After": {
+                    "type": "boolean"
+                },
                 "Continue-On-Fail": {
                     "type": "boolean"
                 },
@@ -21924,6 +21927,9 @@
                 "Confirm-Key": {
                     "type": "string"
                 },
+                "Continue-After": {
+                    "type": "string"
+                },
                 "Continue-On-Fail": {
                     "type": "string"
                 },
@@ -22176,6 +22182,9 @@
                     "type": "string"
                 },
                 "Confirm-Key": {
+                    "type": "string"
+                },
+                "Continue-After": {
                     "type": "string"
                 },
                 "Continue-On-Fail": {
@@ -23809,6 +23818,9 @@
                     "type": "string"
                 },
                 "Confirm-Key": {
+                    "type": "string"
+                },
+                "Continue-After": {
                     "type": "string"
                 },
                 "Continue-On-Fail": {

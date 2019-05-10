@@ -66,6 +66,7 @@
         ,sound_touch/1, sound_touch_v/1
         ,hold_control/1, hold_control_v/1
         ,event_actions/1, event_actions_v/1
+        ,continue_on_fail_v/1
         ]).
 
 -export([queue/1, queue_v/1
@@ -110,6 +111,14 @@ b_leg_events_v(Events) ->
     lists:all(fun(ApiEvent) ->
                       lists:member(ApiEvent, ?CALL_EVENTS)
               end, Events).
+
+-spec continue_on_fail_v(kz_term:ne_binaries() | boolean()) -> boolean().
+continue_on_fail_v(Val)
+  when is_list(Val) ->
+    lists:all(fun(V) -> kz_term:is_ne_binary(V) end, Val);
+continue_on_fail_v(Val)
+  when is_boolean(Val) -> 'true';
+continue_on_fail_v(_Val) -> 'false'.
 
 %%------------------------------------------------------------------------------
 %% @doc Takes a generic API JObj, determines what type it is, and calls
