@@ -196,7 +196,6 @@ generate_ccvs(_EndpointId, AccountId, Endpoint) ->
               ,fun presence_id/2
               ,fun add_alert_info/2
               ,fun hold_music/2
-               %%               ,fun add_codecs/2
               ],
     lists:foldl(fun(Fun, Acc) -> Fun(Endpoint, Acc) end, CCVs, CCVFuns).
 
@@ -250,8 +249,7 @@ generate_profile(EndpointId, AccountId, Endpoint, Options) ->
                   _ -> <<"Callee">>
               end,
 
-    CPVs = [
-            {<<CIDType/binary,"-ID-Number">>, Number}
+    CPVs = [{<<CIDType/binary,"-ID-Number">>, Number}
            ,{<<CIDType/binary,"-ID-Name">>, Name}
            ,{<<"Internal-Caller-ID-Number">>, CIDNumber}
            ,{<<"Internal-Caller-ID-Name">>, CIDName}

@@ -689,12 +689,36 @@ handle_sofia_replaced(<<_/binary>> = ReplacedBy, #state{node=Node
     kz_util:put_callid(ReplacedBy),
     bind(Node, ReplacedBy),
     lager:info("...call id updated, continuing post-transfer"),
+    set_control_info(ReplacedBy, State),
+
     Commands = [kz_json:set_value(<<"Call-ID">>, ReplacedBy, JObj)
                 || JObj <- queue:to_list(CommandQ)
                ],
     force_queue_advance(State#state{call_id = ReplacedBy
                                    ,command_q=queue:from_list(Commands)
                                    }).
+
+-spec set_control_info(kz_term:ne_binary(), state()) -> 'ok'.
+set_control_info(UUID, #state{node=Node
+                             ,fetch_id=FetchId
+                             ,control_q=ControlQ
+                             })->
+    Cmd = 'kz_uuid_setvar_multi_encoded',
+    Arg = list_to_binary([UUID
+                         ," ^^;Call-Control-Queue="
+                         ,kapi:encode_pid(ControlQ)
+                         ,";Call-Control-PID="
+                         ,kz_term:to_binary(self())
+                         ,";ecallmgr_Ecallmgr-Node="
+                         ,kz_term:to_binary(node())
+                         ,";Call-Control-Node="
+                         ,kz_term:to_binary(node())
+                         ,";"
+                         ,?SET_CCV(<<"Fetch-ID">>, FetchId)
+                         ]),
+    freeswitch:api(Node, Cmd, Arg),
+    %% freeswitch:sync_channel(Node, ReplacedBy),
+    'ok'.
 
 %%------------------------------------------------------------------------------
 %% @doc
@@ -1153,6 +1177,17 @@ handle_direct(JObj, #state{fetch_id=FetchId
             {'noreply', State}
     end.
 
+-spec handle_sync(kz_json:object(), state()) ->
+                             {'noreply', state()}.
+handle_sync(JObj, #state{fetch_id=FetchId
+                            ,node=_Node
+                            ,call_id=_CallId
+                            }=State) ->
+    case kz_call_event:custom_channel_var(JObj, <<"Fetch-ID">>) of
+        FetchId -> {'noreply', State};
+        New -> {'noreply', State#state{fetch_id=New}}
+    end.
+
 -spec handle_transferee(kz_json:object(), state()) ->
                                {'noreply', state()}.
 handle_transferee(JObj, #state{fetch_id=FetchId
@@ -1186,6 +1221,8 @@ handle_event_info(CallId, JObj, #state{call_id=CallId}=State) ->
             handle_direct(JObj, State);
         <<"CHANNEL_EXECUTE">> when Application =:= <<"redirect">> ->
             {'stop', 'normal', State};
+        <<"CHANNEL_SYNC">> ->
+            handle_sync(JObj, State);
         _Else ->
             {'noreply', State}
     end.

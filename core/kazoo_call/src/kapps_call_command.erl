@@ -2752,6 +2752,8 @@ wait_for_bridge(Timeout, Fun, Call, Start, {'ok', JObj}) ->
     MsgFetchId = kz_call_event:custom_channel_var(JObj, <<"Fetch-ID">>),
     Disposition = kz_json:get_value(<<"Disposition">>, JObj),
     BridgeHangupCause = kz_json:get_ne_binary_value(<<"Bridge-Hangup-Cause">>, JObj),
+    TransferDisposition = kz_json:get_ne_binary_value(<<"Transfer-Disposition">>, JObj),
+    EndpointDisposition = kz_json:get_ne_binary_value(<<"Endpoint-Disposition">>, JObj),
     Cause = kz_json:get_first_defined([<<"Application-Response">>
                                       ,<<"Hangup-Cause">>
                                       ], JObj, <<"UNSPECIFIED">>),
@@ -2813,10 +2815,14 @@ wait_for_bridge(Timeout, Fun, Call, Start, {'ok', JObj}) ->
           when CallFetchId =:= MsgFetchId
                andalso BridgeHangupCause =/= <<"PICKED_OFF">>
                andalso BridgeHangupCause =/= <<"BOWOUT">>
+               andalso not (EndpointDisposition =:= <<"ATTENDED_TRANSFER">>
+                                andalso TransferDisposition =:= <<"replaced">>
+                           )
                ->
             %% TODO: reduce log level if no issue is found with
             %%    basing the Result on Disposition
             lager:info("bridge channel execute completed with result ~s(~s) ~s", [Disposition, Result, BridgeHangupCause]),
+            %% lager:info_unsafe("bridge channel execute completed with result ~s(~s) ~s => ~s", [Disposition, Result, BridgeHangupCause, kz_json:encode(JObj, [pretty])]),
             {Result, JObj};
         {<<"call_event">>, <<"CHANNEL_EXECUTE_COMPLETE">>, <<"bridge">>}
           when CallFetchId =:= MsgFetchId
