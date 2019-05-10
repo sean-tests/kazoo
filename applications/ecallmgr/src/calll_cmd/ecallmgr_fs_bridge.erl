@@ -243,6 +243,7 @@ handle_loopback(DP, _Node, _UUID, _Channel, JObj) ->
 pre_exec(DP, _Node, _UUID, _Channel, _JObj) ->
     [{"application", "set continue_on_fail=true"}
     ,{"application", "export sip_redirect_context=context_2"}
+    ,{"application", "set hangup_after_bridge=true"}
      |DP
     ].
 

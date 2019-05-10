@@ -9869,6 +9869,9 @@
                 "Duration-Seconds": {
                     "type": "string"
                 },
+                "Endpoint-Disposition": {
+                    "type": "string"
+                },
                 "Event-Category": {
                     "enum": [
                         "call_event"
@@ -9996,6 +9999,9 @@
                     "type": "string"
                 },
                 "To-Uri": {
+                    "type": "string"
+                },
+                "Transfer-Disposition": {
                     "type": "string"
                 },
                 "Transfer-History": {
@@ -22666,6 +22672,9 @@
                 "Duration-Seconds": {
                     "type": "string"
                 },
+                "Endpoint-Disposition": {
+                    "type": "string"
+                },
                 "Event-Category": {
                     "enum": [
                         "resource"
@@ -22799,6 +22808,9 @@
                     "type": "string"
                 },
                 "To-Uri": {
+                    "type": "string"
+                },
+                "Transfer-Disposition": {
                     "type": "string"
                 },
                 "Transfer-History": {
@@ -22939,6 +22951,9 @@
                 "Duration-Seconds": {
                     "type": "string"
                 },
+                "Endpoint-Disposition": {
+                    "type": "string"
+                },
                 "Event-Category": {
                     "enum": [
                         "resource"
@@ -23072,6 +23087,9 @@
                     "type": "string"
                 },
                 "To-Uri": {
+                    "type": "string"
+                },
+                "Transfer-Disposition": {
                     "type": "string"
                 },
                 "Transfer-History": {
