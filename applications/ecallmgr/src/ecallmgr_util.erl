@@ -100,20 +100,16 @@ send_cmd(Node, UUID, App, FSApp, Args) when not is_list(FSApp) ->
 send_cmd(Node, UUID, App, "xferext", Dialplan) ->
     XferExt = [begin
                    lager:debug("building xferext on node ~s: ~s", [Node, V]),
-                   {FSApp, Arg} = case binary:split(kz_term:to_binary(V), <<" ">>) of
-                                      [AppName, AppArgs] -> {AppName, AppArgs};
-                                      [AppName] -> {AppName, <<>>}
-                                  end,
-                   [{<<"call-command">>, <<"execute">>}
-                   ,{<<"execute-app-name">>, kz_term:to_binary(FSApp)}
-                   ,{<<"execute-app-arg">>, kz_term:to_binary(Arg)}
-                   ,{<<"event-uuid-name">>, kz_term:to_binary(App)}
-                   ]
+                   {kz_term:to_list(K), kz_term:to_list(V)}
                end
                || {K, V} <- Dialplan,
                   not cmd_is_empty({kz_term:to_list(K), kz_term:to_list(V)})
               ],
-    freeswitch:cmds(Node, UUID, XferExt);
+    Result = freeswitch:sendmsg(Node, UUID, [{"call-command", "xferext"} | XferExt]),
+    lager:debug("xfer execute result on node ~s(~s)  ~s : ~p"
+               ,[Node, UUID, App, Result]
+               ),
+    Result;
 send_cmd(Node, UUID, App, FSApp, Args) when not is_list(Args) ->
     send_cmd(Node, UUID, App, FSApp, kz_term:to_list(Args));
 send_cmd(_Node, _UUID, _App, "kz_multiset_encoded", "^^") -> 'ok';
