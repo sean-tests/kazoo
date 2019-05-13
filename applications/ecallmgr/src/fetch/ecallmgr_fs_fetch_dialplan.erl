@@ -33,7 +33,7 @@ init() ->
 -spec dialplan(map()) -> fs_sendmsg_ret().
 dialplan(#{fetch_id := FetchId, payload := JObj}=Map) ->
     lager:debug("start dialplan fetch ~s for ~s", [FetchId, kzd_fetch:call_id(JObj)]),
-    lager:debug_unsafe("dialplan request => ~s", [kz_json:encode(JObj, ['pretty'])]),
+    %% lager:debug_unsafe("dialplan request => ~s", [kz_json:encode(JObj, ['pretty'])]),
     case ecallmgr_call_sup:control_context() of
         {'ok', Context} -> run(maps:merge(Map, Context));
         _ -> send_reply(timeout_reply(Map))
